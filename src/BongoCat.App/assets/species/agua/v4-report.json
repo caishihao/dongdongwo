@@ -1,0 +1,60 @@
+{
+  "styles": [
+    {
+      "style": "clay",
+      "scale": 0.3754,
+      "ox": 50,
+      "oy": 3,
+      "canvas_w": 384
+    },
+    {
+      "style": "sticker",
+      "scale": 0.3754,
+      "ox": 50,
+      "oy": 3,
+      "canvas_w": 384
+    },
+    {
+      "style": "flat",
+      "scale": 0.3754,
+      "ox": 50,
+      "oy": 3,
+      "canvas_w": 384
+    },
+    {
+      "style": "sketch",
+      "scale": 0.3754,
+      "ox": 50,
+      "oy": 3,
+      "canvas_w": 384
+    },
+    {
+      "style": "chibi",
+      "scale": 0.3754,
+      "ox": 50,
+      "oy": 3,
+      "canvas_w": 384
+    },
+    {
+      "style": "papercut",
+      "scale": 0.3754,
+      "ox": 50,
+      "oy": 3,
+      "canvas_w": 384
+    }
+  ],
+  "bongos": {
+    "left": {
+      "x": 68.0,
+      "y": 152.0,
+      "w": 44.0,
+      "h": 25.0
+    },
+    "right": {
+      "x": 112.0,
+      "y": 152.0,
+      "w": 44.0,
+      "h": 25.0
+    }
+  }
+}

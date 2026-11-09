@@ -26,7 +26,8 @@ public sealed record SpriteAnchors
 public sealed class SpriteSpeciesCatalog
 {
     /// <summary>sprite 块的部分（与产出文件名对应）。</summary>
-    public static readonly string[] Parts = ["body", "pawL", "pawR"];
+    /// <summary>v5 双帧部件（idle/tap 整绘；v4 及更早的 body/pawL/pawR 已废弃）。</summary>
+    public static readonly string[] Parts = ["idle", "tap"];
 
     private readonly Dictionary<string, SpriteAnchors> _anchorsByStyle;
     private readonly Assembly _assembly;

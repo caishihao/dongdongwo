@@ -51,10 +51,14 @@ public static class SpriteArt
             return null;
         }
 
-        BitmapSource? body = LoadPart(speciesId, style.Id, "body", sprites, log);
-        BitmapSource? pawL = LoadPart(speciesId, style.Id, "pawL", sprites, log);
-        BitmapSource? pawR = LoadPart(speciesId, style.Id, "pawR", sprites, log);
-        if (body is null || pawL is null || pawR is null)
+        BitmapSource? idle = LoadPart(speciesId, style.Id, "idle", sprites, log);
+        BitmapSource? tap = LoadPart(speciesId, style.Id, "tap", sprites, log);
+        // v5 双帧模式（idle/tap 整绘，鼓烘焙在画面内）：帧切换走动画器
+        bool framesMode = idle is not null && tap is not null;
+        BitmapSource? body = framesMode ? null : LoadPart(speciesId, style.Id, "body", sprites, log);
+        BitmapSource? pawL = framesMode ? null : LoadPart(speciesId, style.Id, "pawL", sprites, log);
+        BitmapSource? pawR = framesMode ? null : LoadPart(speciesId, style.Id, "pawR", sprites, log);
+        if (!framesMode && (body is null || pawL is null || pawR is null))
         {
             log?.Invoke($"[Sprite] 物种 '{speciesId}' 风格 '{style.Id}' 缺 sprite 部件，回退 cat（GDD-09 §7）");
             return null;
@@ -65,7 +69,7 @@ public static class SpriteArt
         // ① body sprite（居中位；squash 以脚底为轴——与矢量层同轴语义）
         var bodyImage = new Image
         {
-            Source = body,
+            Source = framesMode ? idle : body,
             Width = SpriteWidth,
             Height = SpriteHeight,
         };
@@ -76,17 +80,32 @@ public static class SpriteArt
 
         // ② 脸层：v1 脸烘焙进 body，face 层保持空（契约层位保留）
 
-        // ③ 程序化邦戈鼓层（双鼓不拆，按风格配色复用矢量绘制）
-        var (bongoBodyL, bongoRimL, bongoBodyR, bongoRimR) = StyleArt.BuildSpriteBongos(bongos, style);
+        // ③ 邦戈鼓层：双帧模式鼓已烘焙进画面（哑形状占位）；旧模式程序化复用矢量绘制
+        (Shape BodyL, Shape RimL, Shape BodyR, Shape RimR) bongo;
+        if (framesMode)
+        {
+            Shape D() => new Rectangle { Width = 0, Height = 0, Fill = null };
+            bongo = (D(), D(), D(), D());
+        }
+        else
+        {
+            bongo = StyleArt.BuildSpriteBongos(bongos, style);
+        }
         var bongoSink = StyleArt.NewTranslate(bongos);
 
-        // ④⑤ 双爪 sprite（与 body 同位对齐；旋转轴 = anchors.pawAxis 爪根）
+        // ④⑤ 双爪层：双帧模式为空层（爪烘焙进帧）；旧模式 sprite 部件
         var pawLTranslate = StyleArt.NewTranslate(pawLLayer);
         var pawLRotate = NewRotate(pawLLayer, axisX: anchors.PawAxisLX, axisY: anchors.PawAxisLY);
-        StyleArt.Add(pawLLayer, PartImage(pawL));
+        if (pawL is not null)
+        {
+            StyleArt.Add(pawLLayer, PartImage(pawL));
+        }
         var pawRTranslate = StyleArt.NewTranslate(pawRLayer);
         var pawRRotate = NewRotate(pawRLayer, axisX: anchors.PawAxisRX, axisY: anchors.PawAxisRY);
-        StyleArt.Add(pawRLayer, PartImage(pawR));
+        if (pawR is not null)
+        {
+            StyleArt.Add(pawRLayer, PartImage(pawR));
+        }
 
         // ⑥ hat 层（矢量帽子跨路径混排；锚点平移由 StyleRenderer 合成后统一钳制）
         var hatBounce = StyleArt.NewTranslate(hat);
@@ -119,10 +138,10 @@ public static class SpriteArt
             PawLineR = dummies.PawLineR,
             CowSpots = dummies.CowSpots,
             CowSpotShapes = [],
-            BongoBodyL = bongoBodyL,
-            BongoRimL = bongoRimL,
-            BongoBodyR = bongoBodyR,
-            BongoRimR = bongoRimR,
+            BongoBodyL = bongo.BodyL,
+            BongoRimL = bongo.RimL,
+            BongoBodyR = bongo.BodyR,
+            BongoRimR = bongo.RimR,
             PawLTranslate = pawLTranslate,
             PawRTranslate = pawRTranslate,
             PawLRotate = pawLRotate,
@@ -131,7 +150,21 @@ public static class SpriteArt
             BongoSink = bongoSink,
             HatBounce = hatBounce,
             FaceBounce = faceBounce,
+            Frames = framesMode ? new FrameSwitcher(bodyImage, idle!, tap!) : null,
         };
+    }
+
+    /// <summary>双帧切换（v5）：敲击瞬间换 tap 帧、回弹后回 idle 帧。</summary>
+    public interface ISpriteFrameSwitcher
+    {
+        void ShowTap();
+        void ShowIdle();
+    }
+
+    private sealed class FrameSwitcher(Image target, BitmapSource idle, BitmapSource tap) : ISpriteFrameSwitcher
+    {
+        public void ShowTap() => target.Source = tap;
+        public void ShowIdle() => target.Source = idle;
     }
 
     /// <summary>解码一个 sprite 部件（缓存 + Freeze；缺资源/解码失败返回 null——防御不抛）。</summary>

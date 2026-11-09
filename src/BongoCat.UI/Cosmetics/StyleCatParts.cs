@@ -68,4 +68,7 @@ public sealed class StyleCatParts
     /// <summary>hat/face 层错位反弹（剪纸"纸片拍击"；其余风格静止）。</summary>
     public required TranslateTransform HatBounce { get; init; }
     public required TranslateTransform FaceBounce { get; init; }
+
+    /// <summary>v5 双帧切换（sprite 物种 idle/tap 整绘）；矢量物种为 null。</summary>
+    public SpriteArt.ISpriteFrameSwitcher? Frames { get; init; }
 }

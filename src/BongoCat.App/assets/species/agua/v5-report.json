@@ -1,0 +1,38 @@
+[
+  {
+    "style": "clay",
+    "scale": 0.3284,
+    "ox": 18,
+    "oy": 18
+  },
+  {
+    "style": "sticker",
+    "scale": 0.3601,
+    "ox": 34,
+    "oy": -12
+  },
+  {
+    "style": "flat",
+    "scale": 0.3958,
+    "ox": 16,
+    "oy": -33
+  },
+  {
+    "style": "sketch",
+    "scale": 0.3425,
+    "ox": 44,
+    "oy": 3
+  },
+  {
+    "style": "chibi",
+    "scale": 0.3684,
+    "ox": 32,
+    "oy": -9
+  },
+  {
+    "style": "papercut",
+    "scale": 0.3391,
+    "ox": 48,
+    "oy": 18
+  }
+]

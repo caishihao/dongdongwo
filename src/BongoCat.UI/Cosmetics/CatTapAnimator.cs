@@ -75,6 +75,22 @@ public static class CatTapAnimator
             parts.BodySquash.BeginAnimation(ScaleTransform.ScaleYProperty, null);
         }
 
+        // ③b 双帧切换（sprite 物种 v5）：敲击瞬间切 tap 帧，回弹后回 idle 帧
+        if (parts.Frames is { } frames)
+        {
+            frames.ShowTap();
+            var revert = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(DownMs + reboundMs * 0.5),
+            };
+            revert.Tick += (_, _) =>
+            {
+                revert.Stop();
+                frames.ShowIdle();
+            };
+            revert.Start();
+        }
+
         // ④ 鼓下沉（chibi 敲中鼓沉 3px）
         if (style.BongoSinkPx > 0)
         {

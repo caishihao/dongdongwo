@@ -1,0 +1,86 @@
+[
+  {
+    "style": "clay",
+    "char_w2x": 213,
+    "offset_x2x": 113,
+    "armL_size": [
+      180,
+      291
+    ],
+    "armR_size": [
+      132,
+      270
+    ],
+    "scale": 0.332
+  },
+  {
+    "style": "sticker",
+    "char_w2x": 193,
+    "offset_x2x": 123,
+    "armL_size": [
+      163,
+      292
+    ],
+    "armR_size": [
+      163,
+      295
+    ],
+    "scale": 0.331
+  },
+  {
+    "style": "flat",
+    "char_w2x": 195,
+    "offset_x2x": 122,
+    "armL_size": [
+      162,
+      285
+    ],
+    "armR_size": [
+      162,
+      286
+    ],
+    "scale": 0.338
+  },
+  {
+    "style": "sketch",
+    "char_w2x": 214,
+    "offset_x2x": 113,
+    "armL_size": [
+      170,
+      283
+    ],
+    "armR_size": [
+      162,
+      279
+    ],
+    "scale": 0.337
+  },
+  {
+    "style": "chibi",
+    "char_w2x": 202,
+    "offset_x2x": 119,
+    "armL_size": [
+      175,
+      300
+    ],
+    "armR_size": [
+      175,
+      303
+    ],
+    "scale": 0.323
+  },
+  {
+    "style": "papercut",
+    "char_w2x": 205,
+    "offset_x2x": 117,
+    "armL_size": [
+      172,
+      291
+    ],
+    "armR_size": [
+      172,
+      290
+    ],
+    "scale": 0.33
+  }
+]
