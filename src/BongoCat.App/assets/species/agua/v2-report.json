@@ -1,0 +1,44 @@
+[
+  {
+    "style": "clay",
+    "arm_color": "#f7c33c",
+    "claw_color": "#854e25",
+    "char_w2x": 213,
+    "offset_x2x": 113
+  },
+  {
+    "style": "sticker",
+    "arm_color": "#f9d74f",
+    "claw_color": "#854e25",
+    "char_w2x": 193,
+    "offset_x2x": 123
+  },
+  {
+    "style": "flat",
+    "arm_color": "#f9d74f",
+    "claw_color": "#854e25",
+    "char_w2x": 195,
+    "offset_x2x": 122
+  },
+  {
+    "style": "sketch",
+    "arm_color": "#faed7c",
+    "claw_color": "#854e25",
+    "char_w2x": 214,
+    "offset_x2x": 113
+  },
+  {
+    "style": "chibi",
+    "arm_color": "#f8e060",
+    "claw_color": "#854e25",
+    "char_w2x": 202,
+    "offset_x2x": 119
+  },
+  {
+    "style": "papercut",
+    "arm_color": "#f9d950",
+    "claw_color": "#854e25",
+    "char_w2x": 205,
+    "offset_x2x": 117
+  }
+]
