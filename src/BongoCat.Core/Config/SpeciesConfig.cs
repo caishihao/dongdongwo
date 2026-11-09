@@ -31,6 +31,9 @@ public sealed record SpeciesPack
     /// </summary>
     public required double HatAnchorOffsetY { get; init; }
 
+    /// <summary>帽子整体缩放（物种头围适配；1 = 原尺寸，范围 0.6~1.2）。</summary>
+    public double HatScale { get; init; } = 1.0;
+
     /// <summary>
     /// 该物种的默认专属皮肤 id（items.json speciesOnly 物品；空串 = 无专属皮肤，用通用默认）。
     /// 恐龙 = dino_default（柚黄+青绿三点，GDD-09 §2.4）。
@@ -139,6 +142,8 @@ public sealed class SpeciesCatalog
             Name = RequireString(el, "name"),
             ByteId = (byte)RequireInt(el, "byteId", min: 0, max: 255),
             HatAnchorOffsetY = RequireDouble(el, "hatAnchorOffsetY", min: -64, max: 64),
+            HatScale = el.TryGetProperty("hatScale", out JsonElement hs) && hs.TryGetDouble(out double hsv)
+                && hsv is >= 0.6 and <= 1.2 ? hsv : 1.0,
             DefaultSkinId = OptionalString(el, "defaultSkinId"),
         };
     }

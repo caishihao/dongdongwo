@@ -26,6 +26,9 @@ public static class StyleRenderer
     /// </summary>
     public static SpriteSpeciesCatalog? SpriteSpecies { get; set; }
 
+    /// <summary>物种参数目录（启动时由 App 注入；species.json 的帽锚增量/帽围缩放数据源）。</summary>
+    public static BongoCat.Core.Config.SpeciesCatalog? SpeciesData { get; set; }
+
     /// <summary>
     /// 装载风格模板到宿主画布（含帽子画布预建 + hat 锚点偏移合成）。猫物种便捷入口。
     /// </summary>
@@ -92,7 +95,13 @@ public static class StyleRenderer
             }
 
             parts = StyleArt.Build(style, resolvedSpecies);
-            hatOffsetY = style.HatAnchorOffsetY + (resolvedSpecies == "dino" ? DinoHatAnchorOffsetY : 0);
+            // 物种层帽锚增量：species.json 数据驱动（缺目录时回退历史常量）
+            double speciesDelta = resolvedSpecies == "dino" ? DinoHatAnchorOffsetY : 0;
+            if (SpeciesData is { } speciesCatalog && speciesCatalog.TryGet(resolvedSpecies, out BongoCat.Core.Config.SpeciesPack sp))
+            {
+                speciesDelta = sp.HatAnchorOffsetY;
+            }
+            hatOffsetY = style.HatAnchorOffsetY + speciesDelta;
         }
 
         host.Children.Add(parts.Root);
@@ -124,18 +133,32 @@ public static class StyleRenderer
             parts.PartHat.RenderTransform = new TranslateTransform(hatOffsetX, clamped);
         }
 
-        // sprite 帽围缩放（阿瓜头围与猫不同）：绕"头顶帽锚"缩放每个帽画布，与层平移独立合成。
+        // 帽围缩放（物种头围适配）：矢量物种读 species.json hatScale，sprite 物种读 anchors.json hatScale
+        double hatScale = 1.0;
+        double hatScaleCx = StyleArt.ArtWidth / 2;
+        double hatScaleCy = StyleArt.ArtHeight / 2;
         if (spriteApplied && SpriteSpecies is { } spritesForScale
-            && spritesForScale.TryGetAnchors(style.Id, out SpriteAnchors anchorsForScale)
-            && Math.Abs(anchorsForScale.HatScale - 1.0) > 0.01)
+            && spritesForScale.TryGetAnchors(style.Id, out SpriteAnchors anchorsForScale))
         {
-            double cx = SpriteArt.OffsetX + anchorsForScale.HatAnchorX;
-            double cy = SpriteArt.OffsetY + anchorsForScale.HatAnchorY;
+            hatScale = anchorsForScale.HatScale;
+            hatScaleCx = SpriteArt.OffsetX + anchorsForScale.HatAnchorX;
+            hatScaleCy = SpriteArt.OffsetY + anchorsForScale.HatAnchorY;
+        }
+        else if (!spriteApplied && SpeciesData is { } speciesForScale
+            && speciesForScale.TryGet(resolvedSpecies, out BongoCat.Core.Config.SpeciesPack spForScale))
+        {
+            hatScale = spForScale.HatScale;
+            // 矢量帽基线：帽形状贴合猫头顶 art y=37（GDD-08 构图约定），叠加物种增量
+            hatScaleCy = CatHatBaselineArtYCenter + spForScale.HatAnchorOffsetY - style.HatAnchorOffsetY;
+        }
+
+        if (Math.Abs(hatScale - 1.0) > 0.01)
+        {
             foreach (Canvas hatChild in parts.PartHat.Children.OfType<Canvas>())
             {
-                hatChild.RenderTransform = new ScaleTransform(anchorsForScale.HatScale, anchorsForScale.HatScale, cx, cy);
+                hatChild.RenderTransform = new ScaleTransform(hatScale, hatScale, hatScaleCx, hatScaleCy);
             }
-            log?.Invoke($"[Style] 帽围缩放 ×{anchorsForScale.HatScale:0.##}（sprite 物种头围适配，锚 {cx:0.#},{cy:0.#}）");
+            log?.Invoke($"[Style] 帽围缩放 ×{hatScale:0.##}（物种头围适配，锚 {hatScaleCx:0.#},{hatScaleCy:0.#}）");
         }
 
         string renderPath = spriteApplied ? "sprite" : "vector";
@@ -144,7 +167,10 @@ public static class StyleRenderer
         return parts;
     }
 
-    /// <summary>恐龙物种层 hat 锚点增量（GDD-09 §2.3：-14px，落位双角之间；由 species.json 数据驱动值在此对齐）。</summary>
+    /// <summary>矢量帽基线（帽形状贴合猫头顶的 art y；物种增量以此为原点合成）。</summary>
+    private const double CatHatBaselineArtYCenter = 37;
+
+    /// <summary>恐龙物种层 hat 锚点增量兜底值（权威值在 species.json hatAnchorOffsetY）。</summary>
     public const double DinoHatAnchorOffsetY = -14;
 
     /// <summary>

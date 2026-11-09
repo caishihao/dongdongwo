@@ -6,14 +6,14 @@
       "id": "cat",
       "name": "猫猫",
       "byteId": 0,
-      "hatAnchorOffsetY": 0,
+      "hatAnchorOffsetY": -4,
       "defaultSkinId": ""
     },
     {
       "id": "dino",
       "name": "小恐龙",
       "byteId": 1,
-      "hatAnchorOffsetY": -14,
+      "hatAnchorOffsetY": -3,
       "defaultSkinId": "dino_default"
     },
     {

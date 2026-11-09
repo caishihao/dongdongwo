@@ -513,6 +513,7 @@ public partial class App : System.Windows.Application
         // GDD-09 §7：sprite 物种资产目录（anchors.json + 位图嵌入资源，防御式）
         //   ——注入 StyleRenderer 静态入口；缺资产/解析失败时 sprite 物种回退 vector cat
         StyleRenderer.SpriteSpecies = SpriteSpeciesCatalog.LoadFromAssembly(FileLog.Write);
+        StyleRenderer.SpeciesData = SpeciesCatalogLoader.LoadFromAssembly(FileLog.Write);
 
         // E8：多人客户端（Platform TCP 实现）+ 编排协调器（敲击/位置/风格/装扮/成员事件中转）
         builder.Services.AddSingleton<IMultiplayerClient>(_ =>

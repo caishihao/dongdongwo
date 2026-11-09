@@ -22,8 +22,8 @@ public class SpeciesConfigTests
         Assert.Equal(0, catalog.Species[0].ByteId);
         Assert.Equal(1, catalog.Species[1].ByteId);
         Assert.Equal(2, catalog.Species[2].ByteId);
-        Assert.Equal(0, catalog.Species[0].HatAnchorOffsetY);
-        Assert.Equal(-14, catalog.Species[1].HatAnchorOffsetY); // GDD-09 §2.3：恐龙 hat 锚点增量
+        Assert.Equal(-4, catalog.Species[0].HatAnchorOffsetY);   // 猫：帽锚上移 4px（露出耳尖）
+        Assert.Equal(-3, catalog.Species[1].HatAnchorOffsetY);   // 恐龙：帽锚贴头顶（原 -14 悬空）
         Assert.Equal(0, catalog.Species[2].HatAnchorOffsetY);   // sprite 物种帽锚由 anchors.json 提供
         Assert.Equal("dino_default", catalog.Species[1].DefaultSkinId); // GDD-09 §2.4
         Assert.Equal("agua_default", catalog.Species[2].DefaultSkinId); // GDD-09 §7：阿瓜专属默认皮肤
