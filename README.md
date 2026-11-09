@@ -1,6 +1,6 @@
 # 咚咚窝 DongDongNest
 
-> 一只小猫或小恐龙住在你的屏幕角落，安安静静地敲着邦戈鼓。
+> 一只小猫、小恐龙以及隐藏角色住在你的屏幕角落，安安静静地敲着邦戈鼓。
 > 纯 .NET 8 / WPF 原创实现的桌面宠物游戏。
 
 ![C#](https://img.shields.io/badge/C%23-12-blue) ![.NET](https://img.shields.io/badge/.NET-8.0-purple) ![WPF](https://img.shields.io/badge/WPF-xaml-green) ![tests](https://img.shields.io/badge/tests-405%20passing-brightgreen)
