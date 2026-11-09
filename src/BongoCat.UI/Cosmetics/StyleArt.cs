@@ -55,7 +55,7 @@ public static class StyleArt
     }
 
     /// <summary>加入画布并返回（换绑命名形状的唯一挂树入口——防"建了没挂"漂移）。</summary>
-    private static T Add<T>(Canvas canvas, T element) where T : FrameworkElement
+    internal static T Add<T>(Canvas canvas, T element) where T : FrameworkElement
     {
         canvas.Children.Add(element);
         return element;
@@ -142,11 +142,11 @@ public static class StyleArt
         return r;
     }
 
-    private static Canvas Layer()
+    internal static Canvas Layer()
         => new() { RenderTransform = new TransformGroup() };
 
     /// <summary>身体层挤压 Transform（以脚底为轴 scaleY）。</summary>
-    private static ScaleTransform NewSquash(Canvas layer)
+    internal static ScaleTransform NewSquash(Canvas layer)
     {
         var squash = new ScaleTransform { ScaleX = 1, ScaleY = 1 };
         ((TransformGroup)layer.RenderTransform).Children.Add(squash);
@@ -154,7 +154,7 @@ public static class StyleArt
         return squash;
     }
 
-    private static TranslateTransform NewTranslate(Canvas layer, double x = 0, double y = 0)
+    internal static TranslateTransform NewTranslate(Canvas layer, double x = 0, double y = 0)
     {
         var t = new TranslateTransform { X = x, Y = y };
         ((TransformGroup)layer.RenderTransform).Children.Add(t);
@@ -170,7 +170,7 @@ public static class StyleArt
     }
 
     /// <summary>组装六层根画布（绘制顺序 = 层序：body → face → bongos → pawL → pawR → hat）。</summary>
-    private static (Canvas Root, Canvas Body, Canvas Face, Canvas Bongos, Canvas PawL, Canvas PawR, Canvas Hat) NewRoot()
+    internal static (Canvas Root, Canvas Body, Canvas Face, Canvas Bongos, Canvas PawL, Canvas PawR, Canvas Hat) NewRoot()
     {
         var root = new Canvas { Width = ArtWidth, Height = ArtHeight, Background = Brushes.Transparent };
         var body = Layer();
@@ -189,7 +189,7 @@ public static class StyleArt
     }
 
     /// <summary>投影效果（不占层：DropShadowEffect 挂根画布，GDD-08 §2.1/§2.5）。</summary>
-    private static void ApplyShadow(Canvas root, Core.Config.StylePack style)
+    internal static void ApplyShadow(Canvas root, Core.Config.StylePack style)
     {
         if (style.ShadowOpacity <= 0)
         {
@@ -904,12 +904,25 @@ public static class StyleArt
         return (pawLFur, pawLineL, pawRFur, pawLineR, pawLTranslate, pawRTranslate, pawLRotate, pawRRotate);
     }
 
+    /// <summary>
+    /// sprite 物种鼓层（GDD-09 §7：双鼓不拆——sprite 物种只出角色，鼓共用程序化绘制）。
+    /// 按当前风格分发鼓配色（与同风格矢量模板同色同几何同锚点；线稿排线笔法在
+    /// sprite 路径省略——220×180 显示尺寸下描边鼓已够达意，已知简化）。
+    /// </summary>
+    public static (Shape BodyL, Shape RimL, Shape BodyR, Shape RimR) BuildSpriteBongos(
+        Canvas bongos, Core.Config.StylePack style) => style.Id switch
+    {
+        "flat" => BuildDinoBongos(bongos, FlatBongo, FlatBongoRim, radius: 12),
+        "sticker" => BuildDinoBongos(bongos, ClayDrum, ClayRim, 3, White, radius: 16),
+        "chibi" => BuildDinoBongos(bongos, ClayDrum, ClayRim, 3, ChibiOutline, radius: 14),
+        _ => BuildDinoBongos(bongos, ClayDrum, ClayRim, radius: 10),
+    };
+
     /// <summary>恐龙通用双鼓（同一几何同一锚点，GDD-09 §2.2：鼓完全不变）。</summary>
     private static (Shape BodyL, Shape RimL, Shape BodyR, Shape RimR) BuildDinoBongos(
         Canvas bongos, Color drum, Color rim,
         double outlineWidth = 0, Color? outlineColor = null, double radius = 14)
-    {
-        if (outlineWidth > 0 && outlineColor is { } oc)
+    {        if (outlineWidth > 0 && outlineColor is { } oc)
         {
             Add(bongos, R(22, 136, 70, 50, radius, White, outlineWidth, oc));
             Add(bongos, R(148, 136, 70, 50, radius, White, outlineWidth, oc));

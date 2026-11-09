@@ -37,3 +37,4 @@ analysis/**/ai-nailong/
 # ===== 分发产物兜底 =====
 *.zip
 *.exe
+analysis/**/ai-agua/

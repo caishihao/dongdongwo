@@ -125,16 +125,16 @@ public class InventoryServiceTests
     }
 
     [Fact]
-    public void 图鉴计算_5件已拥有7件未拥有_未拥有打码()
+    public void 图鉴计算_5件已拥有9件未拥有_未拥有打码()
     {
         InventoryService svc = CreateService();
         svc.Initialize();
 
         var dex = svc.GetCollectopedia();
 
-        Assert.Equal(13, dex.Count); // GDD-09：目录 13 件（新增恐龙专属皮肤 dino_default）
+        Assert.Equal(14, dex.Count); // GDD-09 §7：目录 14 件（新增阿瓜专属皮肤 agua_default）
         Assert.Equal(5, dex.Count(e => e.Owned));
-        Assert.Equal(8, dex.Count(e => !e.Owned));
+        Assert.Equal(9, dex.Count(e => !e.Owned));
 
         CollectopediaEntry owned = dex.Single(e => e.Item.Id == "skin_cream");
         Assert.Equal("奶油小猫", owned.DisplayName);

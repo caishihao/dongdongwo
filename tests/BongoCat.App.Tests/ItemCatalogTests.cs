@@ -11,16 +11,17 @@ namespace BongoCat.App.Tests;
 public class ItemCatalogTests
 {
     [Fact]
-    public void 嵌入items_json_解析出13件_槽位分布553且id唯一()
+    public void 嵌入items_json_解析出14件_槽位分布563且id唯一()
     {
-        // GDD-09：新增恐龙专属皮肤 dino_default（speciesOnly=dino）→ 13 件
+        // GDD-09：新增恐龙专属皮肤 dino_default（speciesOnly=dino）→ 13 件；
+        // GDD-09 §7：新增阿瓜专属皮肤 agua_default（speciesOnly=agua）→ 14 件
         CosmeticCatalog catalog = ItemCatalogLoader.LoadFromAssembly();
 
-        Assert.Equal(13, catalog.Count);
+        Assert.Equal(14, catalog.Count);
         Assert.Equal(5, catalog.Items.Count(i => i.Slot == ItemSlot.Hat));
-        Assert.Equal(5, catalog.Items.Count(i => i.Slot == ItemSlot.Skin));
+        Assert.Equal(6, catalog.Items.Count(i => i.Slot == ItemSlot.Skin));
         Assert.Equal(3, catalog.Items.Count(i => i.Slot == ItemSlot.Bongos));
-        Assert.Equal(13, catalog.Items.Select(i => i.Id).Distinct().Count());
+        Assert.Equal(14, catalog.Items.Select(i => i.Id).Distinct().Count());
         Assert.All(catalog.Items, i => Assert.False(string.IsNullOrWhiteSpace(i.ArtKey)));
     }
 

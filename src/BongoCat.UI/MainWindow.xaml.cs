@@ -209,7 +209,7 @@ public partial class MainWindow : Window
         return styleId;
     }
 
-    /// <summary>存档物种 id 合法性解析：空/未知 → cat + 日志（GDD-09 §5：空串按 cat 解析）。</summary>
+    /// <summary>存档物种 id 合法性解析：空/未知 → cat + 日志（GDD-09 §5：空串按 cat 解析；§7 sprite 物种 agua 合法，缺资产由渲染层回退）。</summary>
     public string ResolveSpeciesId(string? speciesId)
     {
         if (string.IsNullOrEmpty(speciesId))
@@ -217,7 +217,7 @@ public partial class MainWindow : Window
             return Core.Config.SpeciesCatalog.DefaultSpeciesId;
         }
 
-        if (speciesId is not ("cat" or "dino"))
+        if (speciesId is not ("cat" or "dino" or "agua"))
         {
             FileLog.Write($"[Species] 存档物种 '{speciesId}' 无效，回退 cat");
             return Core.Config.SpeciesCatalog.DefaultSpeciesId;

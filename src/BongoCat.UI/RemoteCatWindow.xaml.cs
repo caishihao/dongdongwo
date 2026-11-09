@@ -135,7 +135,7 @@ public partial class RemoteCatWindow : Window
             return;
         }
 
-        if (speciesId is not ("cat" or "dino"))
+        if (speciesId is not ("cat" or "dino" or "agua"))
         {
             speciesId = Core.Config.SpeciesCatalog.DefaultSpeciesId;
         }

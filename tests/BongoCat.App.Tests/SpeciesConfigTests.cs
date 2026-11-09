@@ -11,19 +11,25 @@ namespace BongoCat.App.Tests;
 public class SpeciesConfigTests
 {
     [Fact]
-    public void 真实speciesjson_解析出两物种_cat在前且dino字节为1()
+    public void 真实speciesjson_解析出三物种_cat在前且dino字节为1_agua字节为2()
     {
         SpeciesCatalog catalog = SpeciesCatalogLoader.LoadFromAssembly(_ => { });
 
-        Assert.Equal(2, catalog.Species.Count);
+        Assert.Equal(3, catalog.Species.Count);
         Assert.Equal("cat", catalog.Species[0].Id);      // 首物种恒为 cat（默认回退语义）
         Assert.Equal("dino", catalog.Species[1].Id);
+        Assert.Equal("agua", catalog.Species[2].Id);
         Assert.Equal(0, catalog.Species[0].ByteId);
         Assert.Equal(1, catalog.Species[1].ByteId);
+        Assert.Equal(2, catalog.Species[2].ByteId);
         Assert.Equal(0, catalog.Species[0].HatAnchorOffsetY);
         Assert.Equal(-14, catalog.Species[1].HatAnchorOffsetY); // GDD-09 §2.3：恐龙 hat 锚点增量
+        Assert.Equal(0, catalog.Species[2].HatAnchorOffsetY);   // sprite 物种帽锚由 anchors.json 提供
         Assert.Equal("dino_default", catalog.Species[1].DefaultSkinId); // GDD-09 §2.4
+        Assert.Equal("agua_default", catalog.Species[2].DefaultSkinId); // GDD-09 §7：阿瓜专属默认皮肤
         Assert.Equal(string.Empty, catalog.Species[0].DefaultSkinId);
+        Assert.Equal("sprite", catalog.Species[2].Kind);  // GDD-09 §7：位图渲染路径
+        Assert.Equal("vector", catalog.Species[0].Kind);
     }
 
     [Fact]
@@ -56,7 +62,9 @@ public class SpeciesConfigTests
 
         Assert.True(catalog.TryGetByByte(1, out SpeciesPack dino));
         Assert.Equal("dino", dino.Id);
-        Assert.False(catalog.TryGetByByte(2, out _)); // 2~15 预留段未实现
+        Assert.True(catalog.TryGetByByte(2, out SpeciesPack agua)); // GDD-09 §7：阿瓜
+        Assert.Equal("agua", agua.Id);
+        Assert.False(catalog.TryGetByByte(3, out _)); // 3~15 预留段未实现
         Assert.False(catalog.TryGetByByte(255, out _));
     }
 

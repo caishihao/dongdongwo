@@ -143,7 +143,7 @@ dino_default（items.json，speciesOnly: dino）：
 |---|---|
 | 恐龙语音/音效 | **不做**。敲鼓音效猫龙完全共用（左低右高 2-3 变体随机，GDD-01）；恐龙无叫声（猫也无） |
 | 恐龙专属装扮（龙角帽/龙翼背饰等） | **V2**。V1 全量共用猫装扮库（帽子几何共用前提，GDD-08 §1.2）；items.json 的 `speciesOnly` 字段先落位，V2 直接复用 |
-| 第三物种 | 不做。`SpeciesByte` 枚举预留 2–15，协议无需再动 |
+| 第三物种 | ~~不做~~ → **阿瓜已上线（§10，sprite 渲染路径）**。`SpeciesByte` 枚举 0–2，3–15 预留 |
 | 物种进经济 | **不进**。与风格同轴：物种是表达轴非稀缺轴，猫/龙全免费自选，不进宝箱/通行证/交易（GDD-08 §5 同款论证） |
 | 换物种清装扮 | **不清**。物种与装扮解耦（§1）；某装扮在龙形体下渲染异常 → 降级该槽默认外观（沿用 GDD-08 §6.4 模式） |
 
@@ -162,3 +162,64 @@ dino_default（items.json，speciesOnly: dino）：
 1. Q版龙 hat 锚点合成 -24px 后，帽位图是否超出 220×180 窗体上缘——需实测；若是，窗体上缘留白 +16px 一次到位（窗体高度属全局改动，需工程评估远端猫窗体影响）。
 2. 恐龙形体位图由美术管线按"每风格 × 每部件"交付（6 风格 × 6 部件 × 2-4 帧），资产量 ≈ 猫的 2 倍——排期需与林绘澄确认是否按"黏土+贴纸先行、其余风格跟进"分批上线（协议/存档一次到位，风格覆盖分批不冲突）。
 3. 远端猫窗体若是按内容自适应（GDD-08 §7.2 未决），龙形体剪影更宽（尾部），窗体宽度需同步验证。
+
+## 10. 第三物种"阿瓜"（sprite 位图渲染路径，设计侧交接格式）
+
+> 本节为 GDD-09 §7"第三物种不做"的修订：阿瓜（agua）已按**位图 sprite 渲染路径**上线。
+> 阿瓜为用户自有 AI 生成角色（黄色小恐龙形、绿眼、奶油肚、棕色三指小爪），走与矢量物种
+> （cat/dino = StyleArt 程序化矢量）**正交的第二条渲染管线**。
+
+### 10.1 渲染路径模型（vector vs sprite）
+
+| 维度 | vector（cat/dino） | sprite（agua） |
+|---|---|---|
+| 形体来源 | StyleArt 程序化矢量模板 | 位图 sprite（嵌入资源 PNG） |
+| 表情层 | PartFace 独立层 | **脸烘焙进 body，v1 无表情切换**（已知简化） |
+| 邦戈鼓 | 各风格程序化鼓层 | **双鼓不拆，共用程序化鼓层**（按当前风格配色，StyleArt.BuildSpriteBongos） |
+| 装扮换绑 | SkinTargets 真实形状换色 | 哑形状（契约字段非空、涂色无视觉效应）；帽子照常矢量叠画（跨路径混排） |
+| 帽锚 | species.json `hatAnchorOffsetY` 增量 | anchors.json `hatAnchor` 绝对锚（220×180 逻辑坐标） |
+
+渲染序与矢量物种一致：body sprite（居中位）→ 程序化鼓层 → pawL/pawR sprite（绕爪轴旋转压深）→ hat。
+敲击动画零改动复用 CatTapAnimator（同一 StylePack 参数源：压深 8px / 回弹 120ms back）。
+
+### 10.2 交付格式（资产管线交接）
+
+- 目录：`src/BongoCat.App/assets/species/agua/{style}/{body,pawL,pawR}.png`
+  （6 风格 × 3 件 = 18 张；440×360 @2x 精度，渲染时缩放 220×180 逻辑）；
+- 锚点：同目录 `anchors.json`——`styles.{style}.pawAxisL/pawAxisR`（爪旋转轴，爪根处）
+  + `hatAnchor`（头顶帽锚），**全部为 220×180 逻辑坐标**（渲染端 + (10,10) 映射进 240×200 画布）；
+- 嵌入资源：csproj `EmbeddedResource Include="assets\species\agua\**"`（**必须**，散文件不入运行时）；
+- 缺文件 / anchors 解析失败 → 该物种回退 cat 渲染 + 日志，**绝不崩溃**（渲染器防御，非美术侧职责）；
+- 新增 sprite 物种的落位清单：资产目录 + anchors.json + species.json 加 `kind:"sprite"` 条目 +
+  `SpriteSpeciesCatalog.DefaultSpriteSpeciesId` 扩展 + StyleRenderer/窗口侧物种白名单各一处。
+
+### 10.3 阿瓜设计规格（视觉锚点）
+
+| 锚点 | 值（实测，220×180 逻辑） | 说明 |
+|---|---|---|
+| hatAnchor | y ≈ 9.3~9.4（头顶，x=110 居中） | 阿瓜头顶圆润无角，帽直接扣头顶；渲染端以"矢量猫头顶 37px"为基线换算 |
+| pawAxis | y ≈ 112~121，x ≈ 84~135（左右各一） | 爪根（臂根切口中心）；旋转轴使爪尖自然压向鼓面 |
+| pressDepth | 8px（与猫一致） | 来自 styles.json 同一参数源，非独立配置 |
+| 专属皮肤 | `agua_default`（免费默认，speciesOnly=agua） | 阿瓜本色位图即默认皮肤；猫/龙不可穿（目录校验拒绝） |
+| 协议字节 | agua = 2（`CatSpeciesByte.Agua`） | 3~15 仍预留 |
+
+### 10.4 已知瑕疵（V1 验收基线，220×180 显示尺寸下可容忍）
+
+1. **鼓区修补痕迹**：原图成鼓被擦除后以"左右腿色水平合拢 + 上缘肚色垂直延伸"修补，
+   两鼓之间的敞开区（逻辑 x82-138）可见竖向色带（黏土/纸面轻噪声掩盖，线稿风格最明显）；
+2. **爪图边缘残片**：爪与原图鼓面重叠处随爪层保留（羽化 5px 渐隐），落点与程序化鼓面重叠后不显；
+3. **剪纸风投影丢失**：papercut 背景浅投影随抠图清除（投影与背景色连续，无法分离），
+   保留剪纸白纸边作为风格特征；
+4. **clay 爪尖指向两鼓之间**：黏土原图爪位于双鼓上方两侧，程序化鼓布局更宽，敲击时爪尖落在鼓间身体上；
+5. **贴纸/剪纸 bbox 含纸边**：sticker/papercut 的 bbox 底缘含白色纸边"裙边"，角色整体略高于矢量物种。
+
+### 10.5 测试映射
+
+| 覆盖点 | 测试 |
+|---|---|
+| anchors 解析 / 坐标域 / 左右爪分居 | App.Tests/AguaSpriteTests |
+| 18 张资源存在 + 440×360 PNG 头校验 | App.Tests/AguaSpriteTests |
+| species byte agua=2 往返 + Normalize | Protocol.Tests/AguaProtocolTests |
+| agua_default speciesOnly（agua 可穿 / 猫龙拒绝） | App.Tests/SpeciesOnlyEquipTests |
+| sprite 全风格构建 / 哑形状 / 程序化鼓 / hat 锚点 | UI.Tests/AguaRenderTests |
+| 缺目录未注入 → 回退 cat | UI.Tests/AguaRenderTests |

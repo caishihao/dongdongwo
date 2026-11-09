@@ -432,15 +432,16 @@ public class MultiplayerProtocolRoundtripTests
     {
         Assert.Equal(0, CatSpeciesByte.Cat);
         Assert.Equal(1, CatSpeciesByte.Dino);
+        Assert.Equal(2, CatSpeciesByte.Agua); // GDD-09 §7：第三物种（sprite 路径）
         for (byte b = 0; b <= CatSpeciesByte.Max; b++)
         {
             Assert.True(CatSpeciesByte.IsValid(b));
             Assert.Equal(b, CatSpeciesByte.Normalize(b));
         }
 
-        Assert.False(CatSpeciesByte.IsValid(2));
+        Assert.False(CatSpeciesByte.IsValid(3));
         Assert.False(CatSpeciesByte.IsValid(255));
-        Assert.Equal(CatSpeciesByte.Cat, CatSpeciesByte.Normalize(2));
+        Assert.Equal(CatSpeciesByte.Cat, CatSpeciesByte.Normalize(3));
         Assert.Equal(CatSpeciesByte.Cat, CatSpeciesByte.Normalize(255));
     }
 

@@ -4,6 +4,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using BongoCat.App.Styles;
 using BongoCat.Core.Config;
 using BongoCat.Core.Input;
 using BongoCat.UI.Cosmetics;
@@ -27,9 +28,13 @@ public partial class StylePickerWindow : Window
     private static readonly TimeSpan IdleTapInterval = TimeSpan.FromSeconds(4);
 
     private readonly StyleCatalog _styles;
+    private readonly SpeciesCatalog _species;
     private readonly List<(string StyleId, StyleCatParts Parts, Border Card)> _cards = [];
     private readonly List<(string SpeciesId, Button Tab)> _tabs = [];
     private readonly DispatcherTimer _idleTapTimer;
+
+    /// <summary>sprite 资产目录（渲染层静态注入；页签缩略图/卡片默认皮肤用，可为 null）。</summary>
+    private static SpriteSpeciesCatalog? SpriteRendererSprites => StyleRenderer.SpriteSpecies;
 
     private string _selectedSpeciesId = SpeciesCatalog.DefaultSpeciesId;
     private string? _selectedStyleId;
@@ -45,6 +50,7 @@ public partial class StylePickerWindow : Window
     {
         InitializeComponent();
         _styles = styles;
+        _species = species;
 
         foreach (SpeciesPack pack in species.Species)
         {
@@ -58,19 +64,21 @@ public partial class StylePickerWindow : Window
         _idleTapTimer.Tick += (_, _) => PlayIdleTap();
     }
 
-    /// <summary>构建一个物种页签（猫 🐱 / 恐龙 🦖；点击切换物种，不清空风格选择）。</summary>
+    /// <summary>构建一个物种页签（猫 🐱 / 恐龙 🦖 / 阿瓜 = clay 缩略图；点击切换物种，不清空风格选择）。</summary>
     private void BuildSpeciesTab(SpeciesPack pack)
     {
-        string emoji = pack.Id switch
+        object content = pack.Id switch
         {
-            "cat" => "🐱",
-            "dino" => "🦖",
-            _ => string.Empty,
+            "cat" => (object)$"🐱 {pack.Name}",
+            "dino" => $"🦖 {pack.Name}",
+            _ when SpriteRendererSprites is { } sprites &&
+                   SpriteArt.TryGetTabThumbnail(sprites, pack.Id, "clay") is { } thumb => BuildThumbnailTab(thumb, pack.Name),
+            _ => pack.Name,
         };
 
         var tab = new Button
         {
-            Content = $"{emoji} {pack.Name}",
+            Content = content,
             FontSize = 14,
             FontWeight = FontWeights.Bold,
             Padding = new Thickness(14, 6, 14, 6),
@@ -82,6 +90,24 @@ public partial class StylePickerWindow : Window
 
         SpeciesTabsHost.Children.Add(tab);
         _tabs.Add((pack.Id, tab));
+    }
+
+    /// <summary>阿瓜页签内容：clay body 缩略图（12px 高，等比）+ 名称（GDD-09 §7：页签小预览）。</summary>
+    private static StackPanel BuildThumbnailTab(ImageSource thumbnail, string name)
+    {
+        var image = new Image
+        {
+            Source = thumbnail,
+            Height = 16,
+            Stretch = Stretch.Uniform,
+            Margin = new Thickness(0, 0, 4, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        var text = new TextBlock { Text = name, VerticalAlignment = VerticalAlignment.Center };
+        var stack = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        stack.Children.Add(image);
+        stack.Children.Add(text);
+        return stack;
     }
 
     /// <summary>切换物种页签：重建 6 张风格卡预览（物种 × 风格），风格选择保持。</summary>
@@ -119,12 +145,18 @@ public partial class StylePickerWindow : Window
         }
     }
 
+    /// <summary>物种默认皮肤 id（选择器卡片预览按物种默认皮肤出图；无专属皮肤物种 = null）。</summary>
+    private static string? DefaultSkinFor(string speciesId, SpeciesCatalog species)
+        => species.TryGet(speciesId, out SpeciesPack pack) && pack.DefaultSkinId.Length > 0
+            ? pack.DefaultSkinId
+            : null;
+
     /// <summary>构建一张风格卡（当前物种 × 该风格的微型预览 + 名称；点击单选）。</summary>
     private void BuildCard(StylePack style)
     {
         var preview = new Canvas { Width = StyleArt.ArtWidth, Height = StyleArt.ArtHeight, Background = Brushes.Transparent };
         StyleCatParts parts = StyleRenderer.ApplyStyle(preview, style.Id, _styles, _selectedSpeciesId);
-        string? skinId = _selectedSpeciesId == "dino" ? "dino_default" : null; // 龙 = 物种默认皮肤，猫 = 基础
+        string? skinId = DefaultSkinFor(_selectedSpeciesId, _species);
         StyleRenderer.ApplyOutfit(parts, style, null, skinId, null);
 
         var viewbox = new Viewbox

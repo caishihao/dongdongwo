@@ -3,13 +3,20 @@ using System.Text.Json;
 namespace BongoCat.Core.Config;
 
 /// <summary>
-/// 单个物种的形体参数包（GDD-09 §1/§2：物种 = 形体层，species.json 反序列化产物）。
+/// 单个物种的形体参数包（GDD-09 §1/§2/§7：物种 = 形体层，species.json 反序列化产物）。
 /// 物种回答"什么形体"（剪影/部件几何/锚点偏移/专属静态特征）；渲染模板本身在 UI 层
 /// StyleArt 按物种×风格构建，本记录只承载数据驱动的参数（锚点/字节映射/默认皮肤）。
 /// </summary>
 public sealed record SpeciesPack
 {
-    /// <summary>物种 id（小写字母；存档 SpeciesId 与多人渲染键；"cat"/"dino"）。</summary>
+    /// <summary>
+    /// 渲染路径种类（GDD-09 §7）：vector = StyleArt 程序化矢量模板（cat/dino）；
+    /// sprite = 位图 sprite 模板（agua，资产在 assets/species/&lt;id&gt;/，锚点在同目录 anchors.json）。
+    /// 缺省 vector（向后兼容旧 species.json）。
+    /// </summary>
+    public string Kind { get; init; } = "vector";
+
+    /// <summary>物种 id（小写字母；存档 SpeciesId 与多人渲染键；"cat"/"dino"/"agua"）。</summary>
     public required string Id { get; init; }
 
     /// <summary>显示名（选择器页签 / 托盘菜单）。</summary>
@@ -127,6 +134,7 @@ public sealed class SpeciesCatalog
     {
         return new SpeciesPack
         {
+            Kind = OptionalString(el, "kind") is { Length: > 0 } kind ? kind : "vector",
             Id = RequireString(el, "id"),
             Name = RequireString(el, "name"),
             ByteId = (byte)RequireInt(el, "byteId", min: 0, max: 255),

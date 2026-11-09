@@ -24,6 +24,7 @@ using BongoCat.Platform.Window;
 using BongoCat.App.Update;
 using BongoCat.Core.Update;
 using BongoCat.Protocol;
+using BongoCat.UI.Cosmetics;
 using BongoCat.UI.Themes;
 using BongoCat.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -508,6 +509,10 @@ public partial class App : System.Windows.Application
 
         // GDD-09：物种目录（species.json 嵌入资源，fail-fast）——渲染/选择器/托盘/多人共同数据源
         builder.Services.AddSingleton<SpeciesCatalog>(_ => SpeciesCatalogLoader.LoadFromAssembly(FileLog.Write));
+
+        // GDD-09 §7：sprite 物种资产目录（anchors.json + 位图嵌入资源，防御式）
+        //   ——注入 StyleRenderer 静态入口；缺资产/解析失败时 sprite 物种回退 vector cat
+        StyleRenderer.SpriteSpecies = SpriteSpeciesCatalog.LoadFromAssembly(FileLog.Write);
 
         // E8：多人客户端（Platform TCP 实现）+ 编排协调器（敲击/位置/风格/装扮/成员事件中转）
         builder.Services.AddSingleton<IMultiplayerClient>(_ =>

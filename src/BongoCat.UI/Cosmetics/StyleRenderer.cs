@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using BongoCat.App.Styles;
 using BongoCat.Core.Config;
 using BongoCat.Core.Cosmetics;
 
@@ -20,6 +21,12 @@ namespace BongoCat.UI.Cosmetics;
 public static class StyleRenderer
 {
     /// <summary>
+    /// sprite 物种资产目录（GDD-09 §7）：启动时由 App 层注入（LoadFromAssembly 嵌入资源）。
+    /// 未注入 / 资产缺失时 sprite 物种回退 vector cat 渲染（绝不崩溃）。
+    /// </summary>
+    public static SpriteSpeciesCatalog? SpriteSpecies { get; set; }
+
+    /// <summary>
     /// 装载风格模板到宿主画布（含帽子画布预建 + hat 锚点偏移合成）。猫物种便捷入口。
     /// </summary>
     /// <returns>新模板的命名部件集合（调用方保存供动画/换绑使用）。</returns>
@@ -27,14 +34,16 @@ public static class StyleRenderer
         => ApplyStyle(host, styleId, catalog, BongoCat.Core.Config.SpeciesCatalog.DefaultSpeciesId, log);
 
     /// <summary>
-    /// 装载风格 × 物种模板到宿主画布（GDD-09：物种=形体层）。
-    /// 未知风格/物种 id → 回退 clay/cat 并记日志（绝不抛异常——存档脏数据不崩溃）。
+    /// 装载风格 × 物种模板到宿主画布（GDD-09：物种=形体层；§7 sprite 物种走位图路径）。
+    /// 未知风格/物种 id → 回退 clay/cat 并记日志（绝不抛异常——存档脏数据不崩溃）；
+    /// sprite 物种缺资产/anchors → 回退 cat 渲染。
     /// </summary>
     public static StyleCatParts ApplyStyle(Canvas host, string? styleId, StyleCatalog catalog,
         string? speciesId, Action<string>? log = null)
     {
         string resolvedSpecies = speciesId ?? BongoCat.Core.Config.SpeciesCatalog.DefaultSpeciesId;
-        if (resolvedSpecies is not ("cat" or "dino"))
+        bool isSprite = SpriteSpeciesCatalog.IsSpriteSpecies(resolvedSpecies);
+        if (!isSprite && resolvedSpecies is not ("cat" or "dino"))
         {
             log?.Invoke($"[Species] 物种 '{speciesId}' 未知，回退 cat（GDD-09 §5）");
             resolvedSpecies = BongoCat.Core.Config.SpeciesCatalog.DefaultSpeciesId;
@@ -47,7 +56,45 @@ public static class StyleRenderer
         }
 
         host.Children.Clear();
-        StyleCatParts parts = StyleArt.Build(style, resolvedSpecies);
+
+        // GDD-09 §7：sprite 物种（阿瓜）走位图路径；缺资产/未注入目录 → 回退 cat
+        bool spriteApplied = false;
+        double hatOffsetY;
+        double hatOffsetX = 0;
+        StyleCatParts parts;
+        if (isSprite && SpriteSpecies is { } sprites)
+        {
+            StyleCatParts? spriteParts = SpriteArt.Build(style, resolvedSpecies, sprites, log);
+            if (spriteParts is not null)
+            {
+                parts = spriteParts;
+                spriteApplied = true;
+
+                // sprite 帽锚（anchors.json 220×180 逻辑坐标 → art 坐标 +10 居中偏移）：
+                // dy = 阿瓜头顶 art y − 矢量猫头顶基准 37（帽形状贴合 clay 头顶的基线）+ 风格层偏移
+                sprites.TryGetAnchors(style.Id, out SpriteAnchors anchors);
+                hatOffsetY = (anchors.HatAnchorY + SpriteArt.OffsetY) - SpriteArt.CatHatBaselineArtY + style.HatAnchorOffsetY;
+                hatOffsetX = anchors.HatAnchorX - SpriteArt.SpriteWidth / 2;
+            }
+            else
+            {
+                resolvedSpecies = BongoCat.Core.Config.SpeciesCatalog.DefaultSpeciesId;
+                parts = StyleArt.Build(style, resolvedSpecies);
+                hatOffsetY = style.HatAnchorOffsetY;
+            }
+        }
+        else
+        {
+            if (isSprite)
+            {
+                log?.Invoke("[Species] sprite 资产目录未注入，物种回退 cat（GDD-09 §7）");
+                resolvedSpecies = BongoCat.Core.Config.SpeciesCatalog.DefaultSpeciesId;
+            }
+
+            parts = StyleArt.Build(style, resolvedSpecies);
+            hatOffsetY = style.HatAnchorOffsetY + (resolvedSpecies == "dino" ? DinoHatAnchorOffsetY : 0);
+        }
+
         host.Children.Add(parts.Root);
 
         // 帽子画布预建（E3 纪律：装备切换只切 Visibility，不重建几何；每模板实例独立预建）
@@ -57,10 +104,9 @@ public static class StyleRenderer
         }
 
         // hat 锚点偏移合成（GDD-09 §2.3：风格层 + 物种层相加；Q版龙 = -10 + -14 = -24）
-        double hatOffsetY = style.HatAnchorOffsetY + (resolvedSpecies == "dino" ? DinoHatAnchorOffsetY : 0);
-        if (hatOffsetY != 0)
+        if (hatOffsetY != 0 || hatOffsetX != 0)
         {
-            parts.PartHat.RenderTransform = new TranslateTransform(0, hatOffsetY);
+            parts.PartHat.RenderTransform = new TranslateTransform(hatOffsetX, hatOffsetY);
         }
 
         // 开放问题①（GDD-09 §9）：合成锚点使帽位图越过画布上缘 → 钳制下移并记日志
@@ -75,11 +121,12 @@ public static class StyleRenderer
             double clamped = -ClampTopTolerance - hatTop;
             log?.Invoke($"[Style] hat 锚点合成 {hatOffsetY:0.#}px 越出画布上缘（量测帽顶 {hatTop + hatOffsetY:0.#}px，" +
                         $"真实墨迹约 {hatTop + hatOffsetY + ClampTopTolerance:0.#}px），钳制为 {clamped:0.#}px（GDD-09 开放问题①）");
-            parts.PartHat.RenderTransform = new TranslateTransform(0, clamped);
+            parts.PartHat.RenderTransform = new TranslateTransform(hatOffsetX, clamped);
         }
 
-        log?.Invoke($"[Style] 已装载风格 '{style.Id}' × 物种 '{resolvedSpecies}'（压深 {style.TapDownPx:0.#}px，" +
-                    $"回弹 {style.ReboundMs:0}ms {style.Easing}，hat 锚点 {hatOffsetY:0.#}px）");
+        string renderPath = spriteApplied ? "sprite" : "vector";
+        log?.Invoke($"[Style] 已装载风格 '{style.Id}' × 物种 '{resolvedSpecies}'（{renderPath} 路径；压深 {style.TapDownPx:0.#}px，" +
+                    $"回弹 {style.ReboundMs:0}ms {style.Easing}，hat 锚点 ({hatOffsetX:0.#},{hatOffsetY:0.#})px）");
         return parts;
     }
 

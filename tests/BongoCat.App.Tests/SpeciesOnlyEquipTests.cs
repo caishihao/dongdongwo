@@ -79,6 +79,61 @@ public class SpeciesOnlyEquipTests
         Assert.Equal("hat_dev_cap", svc.EquippedHat); // 物种通用装备不动
     }
 
+    // ── GDD-09 §7：阿瓜专属皮肤 agua_default（speciesOnly=agua）────────────
+
+    [Fact]
+    public void agua_default_目录标记speciesOnly为agua()
+    {
+        Assert.True(_catalog.TryGet("agua_default", out CosmeticItem item));
+        Assert.Equal("agua", item.SpeciesOnly);
+        Assert.Equal(ItemSlot.Skin, item.Slot);
+    }
+
+    [Fact]
+    public void 阿瓜装备agua_default_成功()
+    {
+        InventoryService svc = CreateService();
+        svc.GrantItem("agua_default"); // 测试用例手动持有阿瓜专属皮肤
+        _save.Current.SpeciesId = "agua";
+
+        Assert.True(svc.Equip("agua_default"));
+        Assert.Equal("agua_default", svc.EquippedSkin);
+    }
+
+    [Fact]
+    public void 猫装备agua_default_拒绝()
+    {
+        InventoryService svc = CreateService();
+        svc.GrantItem("agua_default");
+        _save.Current.SpeciesId = "cat";
+
+        Assert.False(svc.Equip("agua_default"));
+        Assert.Equal("skin_cream", svc.EquippedSkin); // 原装备不动（默认装）
+    }
+
+    [Fact]
+    public void 龙装备agua_default_拒绝()
+    {
+        InventoryService svc = CreateService();
+        svc.GrantItem("agua_default");
+        _save.Current.SpeciesId = "dino";
+
+        Assert.False(svc.Equip("agua_default"));
+    }
+
+    [Fact]
+    public void 换物种到阿瓜_ValidateSpeciesCompatibility_卸下dino_default()
+    {
+        InventoryService svc = CreateService();
+        _save.Current.SpeciesId = "dino";
+        Assert.True(svc.Equip("dino_default"));
+
+        _save.Current.SpeciesId = "agua"; // 托盘切到阿瓜
+        svc.ValidateSpeciesCompatibility();
+
+        Assert.Equal(string.Empty, svc.EquippedSkin); // 恐龙专属皮肤卸下（agua_default 免费默认，无需装备校验残留）
+    }
+
     [Fact]
     public void 换物种到龙_ValidateSpeciesCompatibility_四色板保留()
     {

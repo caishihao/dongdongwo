@@ -15,13 +15,17 @@
        E4：经济数值 economy.json 同模式嵌入（EconomyConfigLoader）；
        E6：赛季配置 seasons/*.json 同模式嵌入（SeasonConfigLoader，可随版本热更 = 随版本发布更新）；
        GDD-08：风格渲染参数 styles.json 同模式嵌入（StyleCatalogLoader）；
-       GDD-09：物种形体参数 species.json 同模式嵌入（SpeciesCatalogLoader） -->
+       GDD-09：物种形体参数 species.json 同模式嵌入（SpeciesCatalogLoader）；
+       GDD-09 §7：sprite 物种位图资产与锚点（species/agua/**）同模式嵌入
+       （SpriteSpeciesCatalog 从清单流读取——嵌入资源随程序集分发、无文件路径依赖） -->
   <ItemGroup>
     <EmbeddedResource Include="assets\items.json" />
     <EmbeddedResource Include="assets\economy.json" />
     <EmbeddedResource Include="assets\seasons\*.json" />
     <EmbeddedResource Include="assets\styles.json" />
     <EmbeddedResource Include="assets\species.json" />
+    <EmbeddedResource Include="assets\species\agua\**\*.png" />
+    <EmbeddedResource Include="assets\species\agua\anchors.json" />
   </ItemGroup>
 
 </Project>
