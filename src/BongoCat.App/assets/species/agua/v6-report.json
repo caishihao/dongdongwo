@@ -1,0 +1,44 @@
+[
+  {
+    "style": "clay",
+    "scale": 0.3773,
+    "head_top2x": 39,
+    "head_w2x": 155,
+    "head_cx2x": 183
+  },
+  {
+    "style": "sticker",
+    "scale": 0.4137,
+    "head_top2x": 10,
+    "head_w2x": 181,
+    "head_cx2x": 223
+  },
+  {
+    "style": "flat",
+    "scale": 0.4547,
+    "head_top2x": 10,
+    "head_w2x": 174,
+    "head_cx2x": 219
+  },
+  {
+    "style": "sketch",
+    "scale": 0.3935,
+    "head_top2x": 14,
+    "head_w2x": 163,
+    "head_cx2x": 219
+  },
+  {
+    "style": "chibi",
+    "scale": 0.4232,
+    "head_top2x": 10,
+    "head_w2x": 185,
+    "head_cx2x": 219
+  },
+  {
+    "style": "papercut",
+    "scale": 0.3895,
+    "head_top2x": 34,
+    "head_w2x": 179,
+    "head_cx2x": 224
+  }
+]

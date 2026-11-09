@@ -71,4 +71,7 @@ public sealed class StyleCatParts
 
     /// <summary>v5 双帧切换（sprite 物种 idle/tap 整绘）；矢量物种为 null。</summary>
     public SpriteArt.ISpriteFrameSwitcher? Frames { get; init; }
+
+    /// <summary>挤压系数覆盖（位图物种整图挤压易失真，用更小的幅度；null = 用风格参数）。</summary>
+    public double? SquashOverride { get; init; }
 }

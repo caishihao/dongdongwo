@@ -59,11 +59,12 @@ public static class CatTapAnimator
             rotate.BeginAnimation(RotateTransform.AngleProperty, null);
         }
 
-        // ③ 身体挤压（以脚底为轴 scaleY：1 → squash → 1）
-        if (style.SquashScaleY < 1.0)
+        // ③ 身体挤压（以脚底为轴 scaleY：1 → squash → 1；位图物种用更小幅度防失真）
+        double squashTo = parts.SquashOverride ?? style.SquashScaleY;
+        if (squashTo < 1.0)
         {
             var squash = new DoubleAnimationUsingKeyFrames();
-            squash.KeyFrames.Add(new LinearDoubleKeyFrame(style.SquashScaleY, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(DownMs))));
+            squash.KeyFrames.Add(new LinearDoubleKeyFrame(squashTo, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(DownMs))));
             squash.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(DownMs + reboundMs)))
             {
                 EasingFunction = ease,

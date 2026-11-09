@@ -27,7 +27,8 @@ public static class SpriteArt
 {
     /// <summary>sprite 资源逻辑画布（锚点坐标系；2x 资产 440×360 缩放显示）。</summary>
     public const double SpriteWidth = 220;
-    public const double SpriteHeight = 180;
+    /// <summary>v6：资源画布 440×400 @2x（角色 +15% 体型，脚底对齐底边）。</summary>
+    public const double SpriteHeight = 200;
 
     /// <summary>sprite 在 240×200 渲染画布中的居中偏移。</summary>
     public const double OffsetX = (StyleArt.ArtWidth - SpriteWidth) / 2;
@@ -151,6 +152,7 @@ public static class SpriteArt
             HatBounce = hatBounce,
             FaceBounce = faceBounce,
             Frames = framesMode ? new FrameSwitcher(bodyImage, idle!, tap!) : null,
+            SquashOverride = 0.975, // 位图整图挤压：幅度收敛，避免帧内形变失真
         };
     }
 

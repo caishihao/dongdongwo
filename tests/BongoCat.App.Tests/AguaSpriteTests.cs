@@ -7,7 +7,7 @@ namespace BongoCat.App.Tests;
 /// <summary>
 /// 阿瓜 sprite 资产目录测试（GDD-09 §7）：
 /// ① anchors.json 嵌入资源解析（6 风格全存在、爪轴/帽锚坐标在 220×180 合法域）；
-/// ② 18 张 sprite 部件（6 风格 × body/pawL/pawR）全部嵌入且为 440×360 PNG（2x 精度）；
+/// ② 12 张 sprite 双帧（6 风格 × idle/tap）全部嵌入且为 440×400 PNG（2x，v6 体型 +15%）；
 /// ③ 防御回退：损坏 JSON / 缺字段 / 未知风格 / 未知部件 → TryGet false 或 null，绝不抛异常。
 /// </summary>
 public class AguaSpriteTests
@@ -38,7 +38,7 @@ public class AguaSpriteTests
 
     [Theory]
     [MemberData(nameof(StyleIds))]
-    public void sprite部件_三件全嵌入_且为440x360的PNG(string styleId)
+    public void sprite部件_双帧全嵌入_且为440x400的PNG(string styleId)
     {
         SpriteSpeciesCatalog sprites = Load();
 
@@ -55,7 +55,7 @@ public class AguaSpriteTests
                 int width = (head[16] << 24) | (head[17] << 16) | (head[18] << 8) | head[19];
                 int height = (head[20] << 24) | (head[21] << 16) | (head[22] << 8) | head[23];
                 Assert.Equal(440, width);  // 220 逻辑 × 2 精度
-                Assert.Equal(360, height); // 180 逻辑 × 2 精度
+                Assert.Equal(400, height); // 200 逻辑 × 2 精度（v6 体型 +15%）
             }
         }
     }

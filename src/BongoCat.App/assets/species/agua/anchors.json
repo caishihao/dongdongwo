@@ -13,8 +13,9 @@
       },
       "hatAnchor": {
         "x": 110.0,
-        "y": 9.4
-      }
+        "y": 4.5
+      },
+      "hatScale": 0.9
     },
     "sticker": {
       "pawAxisL": {
@@ -27,8 +28,9 @@
       },
       "hatAnchor": {
         "x": 110.0,
-        "y": 9.3
-      }
+        "y": 4.5
+      },
+      "hatScale": 0.9
     },
     "flat": {
       "pawAxisL": {
@@ -41,8 +43,9 @@
       },
       "hatAnchor": {
         "x": 110.0,
-        "y": 9.4
-      }
+        "y": 4.5
+      },
+      "hatScale": 0.9
     },
     "sketch": {
       "pawAxisL": {
@@ -55,8 +58,9 @@
       },
       "hatAnchor": {
         "x": 110.0,
-        "y": 9.4
-      }
+        "y": 4.5
+      },
+      "hatScale": 0.9
     },
     "chibi": {
       "pawAxisL": {
@@ -69,8 +73,9 @@
       },
       "hatAnchor": {
         "x": 110.0,
-        "y": 9.4
-      }
+        "y": 4.5
+      },
+      "hatScale": 0.9
     },
     "papercut": {
       "pawAxisL": {
@@ -83,8 +88,9 @@
       },
       "hatAnchor": {
         "x": 110.0,
-        "y": 9.4
-      }
+        "y": 4.5
+      },
+      "hatScale": 0.9
     }
   }
 }

@@ -15,6 +15,9 @@ public sealed record SpriteAnchors
     public required double PawAxisRY { get; init; }
     public required double HatAnchorX { get; init; }
     public required double HatAnchorY { get; init; }
+
+    /// <summary>帽子整体缩放（阿瓜头围与猫不同；1 = 原尺寸）。</summary>
+    public double HatScale { get; init; } = 1.0;
 }
 
 /// <summary>
@@ -133,6 +136,13 @@ public sealed class SpriteSpeciesCatalog
             return null;
         }
 
+        double hatScale = 1.0;
+        if (el.TryGetProperty("hatScale", out JsonElement hs) && hs.TryGetDouble(out double hv)
+            && hv is >= 0.6 and <= 1.2)
+        {
+            hatScale = hv;
+        }
+
         return new SpriteAnchors
         {
             PawAxisLX = axisLX.Value,
@@ -141,6 +151,7 @@ public sealed class SpriteSpeciesCatalog
             PawAxisRY = axisRY.Value,
             HatAnchorX = hatX.Value,
             HatAnchorY = hatY.Value,
+            HatScale = hatScale,
         };
     }
 

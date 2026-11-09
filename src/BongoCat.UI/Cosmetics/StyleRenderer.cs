@@ -124,6 +124,20 @@ public static class StyleRenderer
             parts.PartHat.RenderTransform = new TranslateTransform(hatOffsetX, clamped);
         }
 
+        // sprite 帽围缩放（阿瓜头围与猫不同）：绕"头顶帽锚"缩放每个帽画布，与层平移独立合成。
+        if (spriteApplied && SpriteSpecies is { } spritesForScale
+            && spritesForScale.TryGetAnchors(style.Id, out SpriteAnchors anchorsForScale)
+            && Math.Abs(anchorsForScale.HatScale - 1.0) > 0.01)
+        {
+            double cx = SpriteArt.OffsetX + anchorsForScale.HatAnchorX;
+            double cy = SpriteArt.OffsetY + anchorsForScale.HatAnchorY;
+            foreach (Canvas hatChild in parts.PartHat.Children.OfType<Canvas>())
+            {
+                hatChild.RenderTransform = new ScaleTransform(anchorsForScale.HatScale, anchorsForScale.HatScale, cx, cy);
+            }
+            log?.Invoke($"[Style] 帽围缩放 ×{anchorsForScale.HatScale:0.##}（sprite 物种头围适配，锚 {cx:0.#},{cy:0.#}）");
+        }
+
         string renderPath = spriteApplied ? "sprite" : "vector";
         log?.Invoke($"[Style] 已装载风格 '{style.Id}' × 物种 '{resolvedSpecies}'（{renderPath} 路径；压深 {style.TapDownPx:0.#}px，" +
                     $"回弹 {style.ReboundMs:0}ms {style.Easing}，hat 锚点 ({hatOffsetX:0.#},{hatOffsetY:0.#})px）");
