@@ -131,10 +131,10 @@ public class AguaRenderTests
     }
 
     [Fact]
-    public void 物种目录_选择器页签数据源含三物种_agua在末位()
+    public void 物种目录_选择器页签数据源含五物种_xiaobai在末位()
     {
         // StylePickerWindow 页签按 SpeciesCatalog.Species 顺序构建（数据驱动）
-        Assert.Equal(3, Species.Species.Count);
-        Assert.Equal("agua", Species.Species[^1].Id);
+        Assert.Equal(5, Species.Species.Count);
+        Assert.Equal("xiaobai", Species.Species[^1].Id);
     }
 }

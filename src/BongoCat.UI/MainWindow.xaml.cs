@@ -217,7 +217,7 @@ public partial class MainWindow : Window
             return Core.Config.SpeciesCatalog.DefaultSpeciesId;
         }
 
-        if (speciesId is not ("cat" or "dino" or "agua"))
+        if (speciesId is not ("cat" or "dino") && !BongoCat.App.Styles.SpriteSpeciesCatalog.IsSpriteSpecies(speciesId))
         {
             FileLog.Write($"[Species] 存档物种 '{speciesId}' 无效，回退 cat");
             return Core.Config.SpeciesCatalog.DefaultSpeciesId;

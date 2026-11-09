@@ -149,7 +149,7 @@ public partial class RemoteCatWindow : Window
             return;
         }
 
-        if (speciesId is not ("cat" or "dino" or "agua"))
+        if (speciesId is not ("cat" or "dino") && !BongoCat.App.Styles.SpriteSpeciesCatalog.IsSpriteSpecies(speciesId))
         {
             speciesId = Core.Config.SpeciesCatalog.DefaultSpeciesId;
         }

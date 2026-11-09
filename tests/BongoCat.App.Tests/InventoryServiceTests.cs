@@ -132,9 +132,9 @@ public class InventoryServiceTests
 
         var dex = svc.GetCollectopedia();
 
-        Assert.Equal(14, dex.Count); // GDD-09 §7：目录 14 件（新增阿瓜专属皮肤 agua_default）
+        Assert.Equal(16, dex.Count); // GDD-09 §8：目录 16 件（新增小黄/小白专属皮肤）
         Assert.Equal(5, dex.Count(e => e.Owned));
-        Assert.Equal(9, dex.Count(e => !e.Owned));
+        Assert.Equal(11, dex.Count(e => !e.Owned));
 
         CollectopediaEntry owned = dex.Single(e => e.Item.Id == "skin_cream");
         Assert.Equal("奶油小猫", owned.DisplayName);

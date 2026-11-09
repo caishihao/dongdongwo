@@ -24,7 +24,7 @@ public class AguaSpriteTests
 
         foreach (string style in new[] { "clay", "sticker", "flat", "sketch", "chibi", "papercut" })
         {
-            Assert.True(sprites.TryGetAnchors(style, out SpriteAnchors a), $"风格 {style} 缺锚点");
+            Assert.True(sprites.TryGetAnchors("agua", style, out SpriteAnchors a), $"风格 {style} 缺锚点");
             // 220×180 逻辑坐标（容差 4px）；爪轴在画布下半（爪根），帽锚在画布上部（头顶）
             Assert.InRange(a.PawAxisLX, -4, 224);
             Assert.InRange(a.PawAxisLY, 60, 180);
@@ -75,9 +75,11 @@ public class AguaSpriteTests
     {
         SpriteSpeciesCatalog sprites = Load();
 
-        Assert.False(sprites.TryGetAnchors("unknown_style", out _));
-        Assert.False(sprites.TryGetAnchors("", out _));
-        Assert.False(sprites.TryGetAnchors(null, out _));
+        // 缺锚点风格/物种 → 默认锚点（双帧模式不依赖；GDD-09 §7 多 sprite 物种扩展）
+        Assert.True(sprites.TryGetAnchors("agua", "unknown_style", out SpriteAnchors defAnchors));
+        Assert.Equal(76, defAnchors.PawAxisLX);
+        Assert.True(sprites.TryGetAnchors("xiaohuang", "clay", out _));
+        Assert.True(sprites.TryGetAnchors(null, null, out _));
         Assert.False(sprites.TryOpenPart("agua", "clay", "tail", out _));   // 非 sprite 部件
         Assert.False(sprites.TryOpenPart("agua", "unknown_style", "body", out _));
         Assert.False(sprites.TryOpenPart("cat", "clay", "body", out _));    // 非 sprite 物种

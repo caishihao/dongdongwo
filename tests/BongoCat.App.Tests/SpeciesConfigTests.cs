@@ -11,17 +11,21 @@ namespace BongoCat.App.Tests;
 public class SpeciesConfigTests
 {
     [Fact]
-    public void 真实speciesjson_解析出三物种_cat在前且dino字节为1_agua字节为2()
+    public void 真实speciesjson_解析出五物种_cat在前且dino字节为1_agua字节为2()
     {
         SpeciesCatalog catalog = SpeciesCatalogLoader.LoadFromAssembly(_ => { });
 
-        Assert.Equal(3, catalog.Species.Count);
+        Assert.Equal(5, catalog.Species.Count);
         Assert.Equal("cat", catalog.Species[0].Id);      // 首物种恒为 cat（默认回退语义）
         Assert.Equal("dino", catalog.Species[1].Id);
         Assert.Equal("agua", catalog.Species[2].Id);
+        Assert.Equal("xiaohuang", catalog.Species[3].Id);
+        Assert.Equal("xiaobai", catalog.Species[4].Id);
         Assert.Equal(0, catalog.Species[0].ByteId);
         Assert.Equal(1, catalog.Species[1].ByteId);
         Assert.Equal(2, catalog.Species[2].ByteId);
+        Assert.Equal(3, catalog.Species[3].ByteId);
+        Assert.Equal(4, catalog.Species[4].ByteId);
         Assert.Equal(-4, catalog.Species[0].HatAnchorOffsetY);   // 猫：帽锚上移 4px（露出耳尖）
         Assert.Equal(-3, catalog.Species[1].HatAnchorOffsetY);   // 恐龙：帽锚贴头顶（原 -14 悬空）
         Assert.Equal(0, catalog.Species[2].HatAnchorOffsetY);   // sprite 物种帽锚由 anchors.json 提供
@@ -64,7 +68,11 @@ public class SpeciesConfigTests
         Assert.Equal("dino", dino.Id);
         Assert.True(catalog.TryGetByByte(2, out SpeciesPack agua)); // GDD-09 §7：阿瓜
         Assert.Equal("agua", agua.Id);
-        Assert.False(catalog.TryGetByByte(3, out _)); // 3~15 预留段未实现
+        Assert.True(catalog.TryGetByByte(3, out SpeciesPack xiaohuang)); // GDD-09 §8：小黄
+        Assert.Equal("xiaohuang", xiaohuang.Id);
+        Assert.True(catalog.TryGetByByte(4, out SpeciesPack xiaobai));   // GDD-09 §8：小白
+        Assert.Equal("xiaobai", xiaobai.Id);
+        Assert.False(catalog.TryGetByByte(5, out _)); // 5~15 预留段未实现
         Assert.False(catalog.TryGetByByte(255, out _));
     }
 

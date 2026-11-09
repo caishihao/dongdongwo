@@ -16,8 +16,14 @@ public static class CatSpeciesByte
     /// <summary>阿瓜（GDD-09 §7 第三物种，sprite 位图渲染路径）。</summary>
     public const byte Agua = 2;
 
-    /// <summary>最大合法枚举值（3~15 预留）。</summary>
-    public const byte Max = Agua;
+    /// <summary>小黄（GDD-09 §8，sprite 位图渲染路径）。</summary>
+    public const byte Xiaohuang = 3;
+
+    /// <summary>小白（GDD-09 §8，sprite 位图渲染路径）。</summary>
+    public const byte Xiaobai = 4;
+
+    /// <summary>最大合法枚举值（5~15 预留）。</summary>
+    public const byte Max = Xiaobai;
 
     /// <summary>枚举是否合法（0~1）。</summary>
     public static bool IsValid(byte value) => value <= Max;

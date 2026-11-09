@@ -21,12 +21,16 @@ public static class PetNameRules
     public const string DefaultCatName = "猫猫";
     public const string DefaultDinoName = "小恐龙";
     public const string DefaultAguaName = "阿瓜";
+    public const string DefaultXiaohuangName = "小黄";
+    public const string DefaultXiaobaiName = "小白";
 
     /// <summary>按存档物种 id 取默认名（未知/空 → 猫；旧档迁移与 UI 回退共用）。</summary>
     public static string DefaultNameForSpecies(string? speciesId) => speciesId switch
     {
         "dino" => DefaultDinoName,
         "agua" => DefaultAguaName,
+        "xiaohuang" => DefaultXiaohuangName,
+        "xiaobai" => DefaultXiaobaiName,
         _ => DefaultCatName,
     };
 

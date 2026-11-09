@@ -74,9 +74,13 @@ def remove_bg(img: Image.Image) -> Image.Image:
 
 def defringe(img: Image.Image) -> Image.Image:
     arr = np.asarray(img).astype(np.uint8)
-    a = np.clip(arr[:, :, 3].astype(np.int16) - 55, 0, 255)
+    a = arr[:, :, 3].astype(np.int16)
+    # 只收紧「边缘半透明」像素；实心区保持 255（全局减 alpha 会让整只角色半透明发灰）
+    a = np.where(a >= 250, 255, np.clip(a - 55, 0, 255))
     a8 = Image.fromarray(a.astype(np.uint8), "L").filter(ImageFilter.MinFilter(3))
-    arr[:, :, 3] = np.asarray(a8)
+    a_arr = np.asarray(a8).astype(np.int16)
+    a_arr = np.where(arr[:, :, 3] >= 250, 255, a_arr)
+    arr[:, :, 3] = a_arr.astype(np.uint8)
     rgb = arr[:, :, :3].astype(np.float32)
     alpha = arr[:, :, 3]
     solid = alpha > 240

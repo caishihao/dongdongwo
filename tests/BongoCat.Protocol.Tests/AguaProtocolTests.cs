@@ -44,7 +44,9 @@ public class AguaProtocolTests
     public void Normalize_未知字节回退cat_agua原样通过()
     {
         Assert.Equal(CatSpeciesByte.Agua, CatSpeciesByte.Normalize(CatSpeciesByte.Agua));
-        Assert.Equal(CatSpeciesByte.Cat, CatSpeciesByte.Normalize(3));
+        Assert.Equal(CatSpeciesByte.Xiaohuang, CatSpeciesByte.Normalize(CatSpeciesByte.Xiaohuang));
+        Assert.Equal(CatSpeciesByte.Xiaobai, CatSpeciesByte.Normalize(CatSpeciesByte.Xiaobai));
+        Assert.Equal(CatSpeciesByte.Cat, CatSpeciesByte.Normalize(5));
         Assert.Equal(CatSpeciesByte.Cat, CatSpeciesByte.Normalize(200));
     }
 

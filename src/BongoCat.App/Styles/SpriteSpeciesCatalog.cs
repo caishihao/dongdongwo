@@ -32,25 +32,44 @@ public sealed class SpriteSpeciesCatalog
     /// <summary>v5 双帧部件（idle/tap 整绘；v4 及更早的 body/pawL/pawR 已废弃）。</summary>
     public static readonly string[] Parts = ["idle", "tap"];
 
-    private readonly Dictionary<string, SpriteAnchors> _anchorsByStyle;
+    private readonly Dictionary<string, Dictionary<string, SpriteAnchors>> _anchorsBySpecies;
+
+    /// <summary>缺 anchors 时的默认锚点（双帧模式不依赖锚点，仅满足契约）。</summary>
+    private static SpriteAnchors DefaultAnchors => new()
+    {
+        PawAxisLX = 76, PawAxisLY = 104, PawAxisRX = 144, PawAxisRY = 104,
+        HatAnchorX = 110, HatAnchorY = 4.5, HatScale = 1.0,
+    };
     private readonly Assembly _assembly;
 
-    private SpriteSpeciesCatalog(Dictionary<string, SpriteAnchors> anchorsByStyle, Assembly assembly)
+    private SpriteSpeciesCatalog(Dictionary<string, Dictionary<string, SpriteAnchors>> anchorsBySpecies, Assembly assembly)
     {
-        _anchorsByStyle = anchorsByStyle;
+        _anchorsBySpecies = anchorsBySpecies;
         _assembly = assembly;
     }
 
     /// <summary>默认 sprite 物种 id（v1 仅 agua；新增 sprite 物种需扩展资源目录与本表）。</summary>
+    /// <summary>sprite 物种 id 集（assets/species/&lt;id&gt;/ 有资产的物种）。</summary>
+    public static readonly string[] SpriteSpeciesIds = ["agua", "xiaohuang", "xiaobai"];
+
+    /// <summary>历史单物种常量（保留兼容）。</summary>
     public const string DefaultSpriteSpeciesId = "agua";
 
     /// <summary>该物种是否为 sprite 渲染路径物种。</summary>
     public static bool IsSpriteSpecies(string? speciesId)
-        => string.Equals(speciesId, DefaultSpriteSpeciesId, StringComparison.Ordinal);
+        => speciesId is not null && Array.IndexOf(SpriteSpeciesIds, speciesId) >= 0;
 
     /// <summary>按风格查询锚点（未知风格返回 false → 调用方回退 vector）。</summary>
-    public bool TryGetAnchors(string? styleId, out SpriteAnchors anchors)
-        => _anchorsByStyle.TryGetValue(styleId ?? string.Empty, out anchors!);
+    public bool TryGetAnchors(string? speciesId, string? styleId, out SpriteAnchors anchors)
+    {
+        if (_anchorsBySpecies.TryGetValue(speciesId ?? string.Empty, out var byStyle)
+            && byStyle.TryGetValue(styleId ?? string.Empty, out anchors!))
+        {
+            return true;
+        }
+        anchors = DefaultAnchors; // 缺锚点物种（新 sprite 物种）走默认值（双帧模式不依赖）
+        return true;
+    }
 
     /// <summary>
     /// 打开 sprite 部件资源流（调用方负责 Dispose）。缺文件返回 false。
@@ -81,40 +100,44 @@ public sealed class SpriteSpeciesCatalog
     public static SpriteSpeciesCatalog? LoadFromAssembly(Action<string>? log = null)
     {
         Assembly assembly = typeof(SpriteSpeciesCatalog).Assembly;
-        const string resourceName = "BongoCat.App.assets.species.agua.anchors.json";
-        try
+        var bySpecies = new Dictionary<string, Dictionary<string, SpriteAnchors>>(StringComparer.Ordinal);
+        foreach (string speciesId in SpriteSpeciesIds)
         {
-            using Stream? stream = assembly.GetManifestResourceStream(resourceName);
-            if (stream is null)
+            string resourceName = $"BongoCat.App.assets.species.{speciesId}.anchors.json";
+            try
             {
-                log?.Invoke($"[Sprite] 嵌入资源缺失：{resourceName}（sprite 物种渲染回退 vector）");
-                return null;
-            }
-
-            using var doc = JsonDocument.Parse(stream);
-            JsonElement styles = doc.RootElement.GetProperty("styles");
-
-            var anchors = new Dictionary<string, SpriteAnchors>(StringComparer.Ordinal);
-            foreach (JsonProperty style in styles.EnumerateObject())
-            {
-                SpriteAnchors? parsed = ParseAnchors(style.Value);
-                if (parsed is null)
+                using Stream? stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream is null)
                 {
-                    log?.Invoke($"[Sprite] anchors.json 风格 '{style.Name}' 字段缺失/越界，该风格回退 vector");
+                    bySpecies[speciesId] = []; // 缺 anchors → 默认锚点（双帧模式不依赖）
                     continue;
                 }
 
-                anchors[style.Name] = parsed;
+                using var doc = JsonDocument.Parse(stream);
+                JsonElement styles = doc.RootElement.GetProperty("styles");
+                var anchors = new Dictionary<string, SpriteAnchors>(StringComparer.Ordinal);
+                foreach (JsonProperty style in styles.EnumerateObject())
+                {
+                    SpriteAnchors? parsed = ParseAnchors(style.Value);
+                    if (parsed is null)
+                    {
+                        log?.Invoke($"[Sprite] {speciesId} anchors 风格 '{style.Name}' 字段缺失/越界，用默认锚点");
+                        continue;
+                    }
+                    anchors[style.Name] = parsed;
+                }
+                bySpecies[speciesId] = anchors;
             }
+            catch (Exception ex)
+            {
+                log?.Invoke($"[Sprite] {speciesId} anchors.json 解析失败：{ex.Message}（用默认锚点）");
+                bySpecies[speciesId] = [];
+            }
+        }
 
-            log?.Invoke($"[Sprite] anchors.json 已载入：{anchors.Count} 风格锚点");
-            return new SpriteSpeciesCatalog(anchors, assembly);
-        }
-        catch (Exception ex)
-        {
-            log?.Invoke($"[Sprite] anchors.json 解析失败：{ex.Message}（sprite 物种渲染回退 vector）");
-            return null;
-        }
+        int total = bySpecies.Values.Sum(d => d.Count);
+        log?.Invoke($"[Sprite] anchors 已载入：{bySpecies.Count} 物种 / {total} 风格");
+        return new SpriteSpeciesCatalog(bySpecies, assembly);
     }
 
     /// <summary>锚点字段解析（缺失/非数/越界返回 null；220×180 逻辑坐标，容差 4px）。</summary>

@@ -46,7 +46,7 @@ public static class SpriteArt
     public static StyleCatParts? Build(Core.Config.StylePack style, string speciesId,
         SpriteSpeciesCatalog sprites, Action<string>? log)
     {
-        if (!sprites.TryGetAnchors(style.Id, out SpriteAnchors anchors))
+        if (!sprites.TryGetAnchors(speciesId, style.Id, out SpriteAnchors anchors))
         {
             log?.Invoke($"[Sprite] 物种 '{speciesId}' 风格 '{style.Id}' 缺 anchors，回退 cat（GDD-09 §7）");
             return null;

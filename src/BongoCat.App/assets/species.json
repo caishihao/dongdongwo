@@ -23,6 +23,22 @@
       "byteId": 2,
       "hatAnchorOffsetY": 0,
       "defaultSkinId": "agua_default"
+    },
+    {
+      "id": "xiaohuang",
+      "kind": "sprite",
+      "name": "小黄",
+      "byteId": 3,
+      "hatAnchorOffsetY": 0,
+      "defaultSkinId": "xiaohuang_default"
+    },
+    {
+      "id": "xiaobai",
+      "kind": "sprite",
+      "name": "小白",
+      "byteId": 4,
+      "hatAnchorOffsetY": 0,
+      "defaultSkinId": "xiaobai_default"
     }
   ]
 }

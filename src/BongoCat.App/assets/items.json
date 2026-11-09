@@ -100,6 +100,22 @@
       "quality": "legendary",
       "displayName": "鎏金庆典鼓",
       "artKey": "bongos_gold"
+    },
+    {
+      "id": "xiaohuang_default",
+      "slot": "skin",
+      "quality": "common",
+      "displayName": "小黄原生毛色",
+      "artKey": "xiaohuang_default",
+      "speciesOnly": "xiaohuang"
+    },
+    {
+      "id": "xiaobai_default",
+      "slot": "skin",
+      "quality": "common",
+      "displayName": "小白原生毛色",
+      "artKey": "xiaobai_default",
+      "speciesOnly": "xiaobai"
     }
   ]
 }

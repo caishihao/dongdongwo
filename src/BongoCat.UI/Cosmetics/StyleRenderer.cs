@@ -78,7 +78,7 @@ public static class StyleRenderer
 
                 // sprite 帽锚（anchors.json 220×180 逻辑坐标 → art 坐标 +10 居中偏移）：
                 // dy = 阿瓜头顶 art y − 矢量猫头顶基准 37（帽形状贴合 clay 头顶的基线）+ 风格层偏移
-                sprites.TryGetAnchors(style.Id, out SpriteAnchors anchors);
+                sprites.TryGetAnchors(resolvedSpecies, style.Id, out SpriteAnchors anchors);
                 hatOffsetY = (anchors.HatAnchorY + SpriteArt.OffsetY) - SpriteArt.CatHatBaselineArtY + style.HatAnchorOffsetY;
                 hatOffsetX = anchors.HatAnchorX - SpriteArt.SpriteWidth / 2;
             }
@@ -147,7 +147,7 @@ public static class StyleRenderer
         double hatScaleCx = StyleArt.ArtWidth / 2;
         double hatScaleCy = StyleArt.ArtHeight / 2;
         if (spriteApplied && SpriteSpecies is { } spritesForScale
-            && spritesForScale.TryGetAnchors(style.Id, out SpriteAnchors anchorsForScale))
+            && spritesForScale.TryGetAnchors(resolvedSpecies, style.Id, out SpriteAnchors anchorsForScale))
         {
             hatScale = anchorsForScale.HatScale;
             hatScaleCx = SpriteArt.OffsetX + anchorsForScale.HatAnchorX;

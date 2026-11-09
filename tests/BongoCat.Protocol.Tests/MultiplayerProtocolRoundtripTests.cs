@@ -433,15 +433,17 @@ public class MultiplayerProtocolRoundtripTests
         Assert.Equal(0, CatSpeciesByte.Cat);
         Assert.Equal(1, CatSpeciesByte.Dino);
         Assert.Equal(2, CatSpeciesByte.Agua); // GDD-09 §7：第三物种（sprite 路径）
+        Assert.Equal(3, CatSpeciesByte.Xiaohuang); // GDD-09 §8：小黄（sprite 路径）
+        Assert.Equal(4, CatSpeciesByte.Xiaobai);   // GDD-09 §8：小白（sprite 路径）
         for (byte b = 0; b <= CatSpeciesByte.Max; b++)
         {
             Assert.True(CatSpeciesByte.IsValid(b));
             Assert.Equal(b, CatSpeciesByte.Normalize(b));
         }
 
-        Assert.False(CatSpeciesByte.IsValid(3));
+        Assert.False(CatSpeciesByte.IsValid(5));
         Assert.False(CatSpeciesByte.IsValid(255));
-        Assert.Equal(CatSpeciesByte.Cat, CatSpeciesByte.Normalize(3));
+        Assert.Equal(CatSpeciesByte.Cat, CatSpeciesByte.Normalize(5));
         Assert.Equal(CatSpeciesByte.Cat, CatSpeciesByte.Normalize(255));
     }
 

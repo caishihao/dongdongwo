@@ -24,8 +24,8 @@
     <EmbeddedResource Include="assets\seasons\*.json" />
     <EmbeddedResource Include="assets\styles.json" />
     <EmbeddedResource Include="assets\species.json" />
-    <EmbeddedResource Include="assets\species\agua\**\*.png" />
-    <EmbeddedResource Include="assets\species\agua\anchors.json" />
+    <EmbeddedResource Include="assets\species\**\*.png" />
+    <EmbeddedResource Include="assets\species\*\anchors.json" />
   </ItemGroup>
 
 </Project>
