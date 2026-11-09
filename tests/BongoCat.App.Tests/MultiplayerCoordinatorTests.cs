@@ -440,6 +440,67 @@ public class MultiplayerCoordinatorTests
         Assert.Equal(string.Empty, received[^1].Skin); // 猫收 dino_default = 物种不符 → 置空
     }
 
+    // ── E9：宠物名（名册名字字段）与成员列表物种 ───────────────────────
+
+    [Fact]
+    public void 名册名字_超长控制符_接收侧清洗并按物种回退()
+    {
+        _mp.Join("1.2.3.4", "布丁", string.Empty);
+
+        var joinedNames = new List<(ushort Id, string Name)>();
+        _mp.RemoteMemberJoined += (id, name) => joinedNames.Add((id, name));
+
+        // 旧客户端 48 字节显示名 + 控制符 + 表情；新接收侧截断到 24B / 12 字素
+        _client.FireJoined("X9T4CB", [
+            new RosterEntry(2, "  糯米\u0000团  ", CatSpeciesByte.Dino),
+            new RosterEntry(5, "🐱🐱🐱🐱🐱🐱🐱", CatSpeciesByte.Agua),
+            new RosterEntry(7, "   ", CatSpeciesByte.Dino),
+        ]);
+
+        Assert.Equal("糯米团", _mp.Members[2]);
+        Assert.Equal("🐱🐱🐱🐱🐱🐱", _mp.Members[5]);
+        Assert.Equal("小恐龙", _mp.Members[7]); // 空白名字 → 物种默认名
+        Assert.Equal("糯米团", joinedNames.Single(n => n.Id == 2).Name);
+        Assert.Equal("小恐龙", joinedNames.Single(n => n.Id == 7).Name);
+    }
+
+    [Fact]
+    public void 成员物种_来自Welcome名册与CatState_缓存可查()
+    {
+        var speciesCatalog = SpeciesCatalogLoader.LoadFromAssembly(_ => { });
+        var client = new FakeMultiplayerClient();
+        var save = new FakeSaveService();
+        var mp = new MultiplayerCoordinator(client, save, _time, null, null, null, speciesCatalog);
+        mp.Join("1.2.3.4", "布丁", string.Empty);
+        client.FireJoined("X9T4CB", [new RosterEntry(2, "糯米", CatSpeciesByte.Dino)]);
+
+        Assert.Equal(CatSpeciesByte.Dino, mp.TryGetRemoteSpecies(2));
+
+        client.FireCatState(2, 0.5, 0.5, CatStyleByte.Clay, CatSpeciesByte.Agua);
+        Assert.Equal(CatSpeciesByte.Agua, mp.TryGetRemoteSpecies(2));
+    }
+
+    [Fact]
+    public void 改名_房间内刷新本机成员表并触发MembersChanged_未连接无动作()
+    {
+        int changed = 0;
+        _mp.MembersChanged += () => changed++;
+
+        _save.Current.PetName = "小布丁";
+        _mp.NotifyPetNameChanged();
+        Assert.Equal(0, changed); // 未加入：无成员表可刷
+
+        _mp.Join("1.2.3.4", "布丁", string.Empty);
+        _client.FireJoined("X9T4CB", []);
+        changed = 0;
+
+        _save.Current.PetName = "小布丁";
+        _mp.NotifyPetNameChanged();
+
+        Assert.Equal(1, changed);
+        Assert.Equal("小布丁", _mp.Members[_client.MyMemberId]);
+    }
+
     /// <summary>可控 TimeProvider（节流窗口推进用；Core 规则：时间可注入）。
     /// GetTimestamp 同步重写为 UtcTicks（默认实现用真实 Stopwatch，注入即失效）；
     /// CreateTimer 返回手动触发的 ManualTimer（装扮防抖 500ms 由测试显式推进，不依赖真实时钟）。</summary>

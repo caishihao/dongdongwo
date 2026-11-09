@@ -161,4 +161,43 @@ public class TrayCommandTests
         Assert.Throws<ArgumentException>(() => _controller.SetCatSpecies(string.Empty));
         Assert.Throws<ArgumentException>(() => _controller.SetCatSpecies(" "));
     }
+
+    // ── E9：宠物取名/重命名 ─────────────────────────────────────────────
+
+    [Fact]
+    public void SetPetName_清洗后写存档并广播_立即落盘()
+    {
+        string? changed = null;
+        _controller.PetNameChanged += name => changed = name;
+        _save.Current.SpeciesId = "dino";
+
+        _controller.SetPetName("  小\u0000龙  ");
+
+        Assert.Equal("小龙", changed);
+        Assert.Equal("小龙", _save.Current.PetName);
+        Assert.Equal("小龙", _save.Current.MpDisplayName); // 兼容旧字段镜像
+        Assert.Equal(1, _save.SaveCount);
+    }
+
+    [Fact]
+    public void SetPetName_空输入_按当前物种回退默认名()
+    {
+        _save.Current.SpeciesId = "agua";
+
+        _controller.SetPetName("   ");
+
+        Assert.Equal("阿瓜", _save.Current.PetName);
+    }
+
+    [Fact]
+    public void RequestRename_广播事件不写盘()
+    {
+        bool requested = false;
+        _controller.RenameRequested += () => requested = true;
+
+        _controller.RequestRename();
+
+        Assert.True(requested);
+        Assert.Equal(0, _save.SaveCount);
+    }
 }

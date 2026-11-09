@@ -1,14 +1,15 @@
 namespace BongoCat.Core.Save;
 
 /// <summary>
-/// 存档内存模型（v10 物种字段；v9 风格包字段；E7 v7：+ 教程状态/主题 id；E6 v6 通行证赛季字段；
-/// v5 图鉴永久点亮/装扮预设/宝箱保底计数；v4 经济字段；v3 库存/装备槽；v2 位置 + 设置 + 窗口尺寸）。
+/// 存档内存模型（v11 宠物名字；v10 物种字段；v9 风格包字段；E7 v7：+ 教程状态/主题 id；
+/// E6 v6 通行证赛季字段；v5 图鉴永久点亮/装扮预设/宝箱保底计数；v4 经济字段；
+/// v3 库存/装备槽；v2 位置 + 设置 + 窗口尺寸）。
 /// 位置按主屏工作区"比例"存储（0~1 浮点），跨分辨率还原（ADR-004 位置记忆节）。
 /// </summary>
 public sealed class SaveModel
 {
-    /// <summary>存档 schema 版本（ADR-004 规则 2：迁移器链式升级。GDD-09 起 v10，新增物种字段）。</summary>
-    public const int CurrentSchemaVersion = 10;
+    /// <summary>存档 schema 版本（ADR-004 规则 2：迁移器链式升级。E9 起 v11，新增 PetName）。</summary>
+    public const int CurrentSchemaVersion = 11;
 
     /// <summary>写入存档文件的 schema 版本。</summary>
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
@@ -193,6 +194,18 @@ public sealed class SaveModel
     /// </summary>
     public string SpeciesId { get; set; } = "cat";
 
+    // ── v11：宠物名字（E9 取名；存档/首登输入/托盘重命名/联机名册共用清洗规则）──
+
+    /// <summary>
+    /// 宠物名字（≤12 个字素、UTF-8 ≤24 字节；首登按物种预填默认名，用户清空回退默认名）。
+    /// 空串 = 尚未取名（加载侧按当前物种补默认名，见 <see cref="PetNameRules"/>）。
+    /// 联机时该值作为名册条目的名字字段发送（复用 DisplayName 线字段，旧端兼容）。
+    /// </summary>
+    public string PetName { get; set; } = string.Empty;
+
+    /// <summary>当前物种对应的默认宠物名（空/未知物种回退猫）。</summary>
+    public string DefaultPetName => PetNameRules.DefaultNameForSpecies(SpeciesId);
+
     /// <summary>尺寸是否为合法档位（容忍 1e-6 浮点误差）。</summary>
     public static bool IsValidWindowScale(double scale)
         => ValidWindowScales.Any(s => Math.Abs(s - scale) < 1e-6);
@@ -349,6 +362,25 @@ public static class SaveMigrator
             model.StyleChosen = false;
             model.SchemaVersion = 10;
             log?.Invoke("[Save] 迁移 v9 → v10：新增 SpeciesId=cat；清 CatStyleId/StyleChosen（重看升级版选择器）");
+        }
+
+        // v10 → v11（E9 取名）：宠物名字字段。旧存档无该字段 → 按当前物种补默认名
+        // （cat=猫猫 / dino=小恐龙 / agua=阿瓜）；已有名字按清洗规则收敛（超长/控制符/空）。
+        // 金币/物品/装扮/教程/主题/联机/风格/物种字段永不动（迁移只增不改、幂等可重放）。
+        if (model.SchemaVersion < 11)
+        {
+            string defaultName = PetNameRules.DefaultNameForSpecies(model.SpeciesId);
+            model.PetName = PetNameRules.Sanitize(model.PetName, defaultName);
+            model.SchemaVersion = 11;
+            log?.Invoke($"[Save] 迁移 v10 → v11：新增 PetName=\"{model.PetName}\"（按物种 {model.SpeciesId} 补默认名）");
+        }
+
+        // 防御：无论来自哪个版本，宠物名都按统一规则收敛（手改存档/旧档残留控制符兜底）
+        string expectedName = PetNameRules.Sanitize(model.PetName, PetNameRules.DefaultNameForSpecies(model.SpeciesId));
+        if (!string.Equals(model.PetName, expectedName, StringComparison.Ordinal))
+        {
+            log?.Invoke($"[Save] PetName 脏值收敛为 \"{expectedName}\"");
+            model.PetName = expectedName;
         }
 
         // 防御：无论来自哪个版本，收敛非法尺寸到 100%（防止手改存档/旧 bug 造成窗口异常）

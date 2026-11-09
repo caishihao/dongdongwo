@@ -153,6 +153,11 @@ public sealed class TrayIconController : IDisposable
 
         _menu.Items.Add(appearanceMenu);
 
+        // ── 重命名（E9：小输入框；清洗与落盘经 TrayCommandController 单一路径）──
+        var renameItem = new ToolStripMenuItem("重命名");
+        renameItem.Click += (_, _) => _commands.RequestRename();
+        _menu.Items.Add(renameItem);
+
         // ── 金币余额（E4：静态文本菜单项，不可点；点开背包查看详情。文案随菜单打开刷新）──
         _coinItem = new ToolStripMenuItem("金币 0") { Enabled = false };
         _menu.Items.Add(_coinItem);
@@ -239,7 +244,7 @@ public sealed class TrayIconController : IDisposable
         // 退出请求（控制器广播）→ 保存窗口位置 → 移除托盘 → 关应用
         _commands.ExitRequested += OnExitRequested;
 
-        _log?.Invoke("[Tray] 托盘图标已创建（菜单：显示隐藏/背包/通行证/新手教程/多人/主题/形象/音量/静音/镜像/尺寸/退出）");
+        _log?.Invoke("[Tray] 托盘图标已创建（菜单：显示隐藏/背包/通行证/新手教程/多人/主题/形象/重命名/音量/静音/镜像/尺寸/退出）");
     }
 
     private void OnExitRequested()

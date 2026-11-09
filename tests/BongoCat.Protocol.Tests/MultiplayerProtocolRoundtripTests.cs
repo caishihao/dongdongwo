@@ -485,6 +485,73 @@ public class MultiplayerProtocolRoundtripTests
         Assert.Equal(CatSpeciesByte.Cat, welcome.Members[0].Species);
     }
 
+    // ── E9：宠物名（名册名字复用 DisplayName，≤24B 新发；旧 48B 仍可收）────
+
+    [Fact]
+    public void Welcome_名册名字UTF8与表情_往返保真()
+    {
+        // 8 个 CJK = 24B（新客户端发送上限） + 6 个表情 = 24B + 普通中文名
+        var message = new WelcomeMessage(2, "A7K2MQ",
+        [
+            new RosterEntry(1, "一二三四五六七八", CatSpeciesByte.Cat),
+            new RosterEntry(3, "🐱🐱🐱🐱🐱🐱", CatSpeciesByte.Agua),
+            new RosterEntry(5, "糯米团", CatSpeciesByte.Dino),
+        ]);
+
+        var welcome = Assert.IsType<WelcomeMessage>(Roundtrip(message));
+        Assert.Equal("一二三四五六七八", welcome.Members[0].PetName);
+        Assert.Equal("🐱🐱🐱🐱🐱🐱", welcome.Members[1].PetName);
+        Assert.Equal("糯米团", welcome.Members[2].PetName);
+        Assert.Equal("糯米团", welcome.Members[2].DisplayName); // 别名同源，线上字段不变
+    }
+
+    [Fact]
+    public void MemberJoin_宠物名UTF8_往返保真()
+    {
+        var join = Assert.IsType<MemberJoinMessage>(Roundtrip(new MemberJoinMessage(5, "阿瓜二世")));
+        Assert.Equal("阿瓜二世", join.DisplayName);
+    }
+
+    [Fact]
+    public void Hello_新客户端24字节名字_旧解码布局仍可解析()
+    {
+        // 新客户端发送 24B 宠物名；旧客户端/旧服务器读取 [len][utf8] 的布局完全不变，
+        // 也不需要理解"宠物名"语义——这就是不 bump 版本、不新增线字段的兼容方案。
+        string name = "一二三四五六七八"; // 8 CJK = 24B
+        byte[] frame = MultiplayerProtocol.Encode(new HelloMessage(name, "A7K2MQ"));
+
+        Assert.Equal(FrameParseStatus.Ok, MultiplayerProtocol.ParseFrame(frame).Status);
+        var decoded = Assert.IsType<HelloMessage>(MultiplayerProtocol.ParseFrame(frame).Message);
+        Assert.Equal(name, decoded.DisplayName);
+        Assert.Equal(24, Encoding.UTF8.GetByteCount(decoded.DisplayName));
+        Assert.Equal(PetNameLimits.MaxUtf8Bytes, HelloMessage.PetNameMaxBytes);
+    }
+
+    [Fact]
+    public void Hello_旧客户端48字节显示名_新解码仍接受不崩()
+    {
+        // 旧客户端仍可能发 48B 显示名：协议层必须继续收（否则旧→新断连），
+        // 展示层由 Core.PetNameRules 截断到 12 字素 / 24B。
+        string oldName = new('猫', 16); // 16 CJK = 48B
+        var hello = Assert.IsType<HelloMessage>(Roundtrip(new HelloMessage(oldName, string.Empty)));
+
+        Assert.Equal(oldName, hello.DisplayName);
+        Assert.Equal(HelloMessage.DisplayNameMaxBytes, Encoding.UTF8.GetByteCount(hello.DisplayName));
+    }
+
+    [Fact]
+    public void Welcome_旧服务器无名字新字段_新解码按既有名字字段回退不崩()
+    {
+        // 旧服务器 Welcome 里名字就是普通显示名；新客户端把它当宠物名使用（无额外字段可缺）。
+        var writer = new LegacyWelcomeWriter(4, "A7K2MQ", [("旧客户端猫猫", 1)]);
+        FrameParseResult result = MultiplayerProtocol.ParseFrame(writer.Encode());
+
+        Assert.Equal(FrameParseStatus.Ok, result.Status);
+        var welcome = Assert.IsType<WelcomeMessage>(result.Message);
+        Assert.Equal("旧客户端猫猫", welcome.Members[0].PetName);
+        Assert.Equal(CatSpeciesByte.Cat, welcome.Members[0].Species);
+    }
+
     /// <summary>测试侧旧格式 Welcome 编码器（GDD-09 之前：成员条目无 species 字节）。</summary>
     private sealed class LegacyWelcomeWriter(ushort yourId, string roomCode, IReadOnlyList<(string Name, ushort Id)> members)
     {

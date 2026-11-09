@@ -4,6 +4,7 @@ using System.Windows.Media;
 using BongoCat.Core.Config;
 using BongoCat.Core.Input;
 using BongoCat.Core.Net;
+using BongoCat.Core.Save;
 using BongoCat.Platform.Native;
 using BongoCat.Platform.Window;
 using BongoCat.Protocol;
@@ -45,7 +46,7 @@ public partial class RemoteCatWindow : Window
         _windowService = windowService;
         _styles = styles;
         MemberId = memberId;
-        NameText.Text = string.IsNullOrEmpty(displayName) ? "猫猫" : displayName;
+        UpdatePetName(displayName);
 
         // 默认按黏土渲染（style 字节未到时的旧客户端回退语义，GDD-08 §6 边界 3）
         ApplyStyle(StyleCatalog.DefaultStyleId);
@@ -53,6 +54,19 @@ public partial class RemoteCatWindow : Window
 
     /// <summary>该窗口对应的房间成员 id（服务器分配）。</summary>
     public ushort MemberId { get; }
+
+    /// <summary>E9：名字牌当前文本（清洗后的宠物名；渲染测试/诊断用）。</summary>
+    public string DisplayedPetName => NameText.Text;
+
+    /// <summary>
+    /// E9：更新宠物头顶名字牌。旧客户端/异常名统一清洗（控制符/超长省略/空回退默认），
+    /// 名字牌本身绝不抛异常（远端窗只做展示，坏名字不能影响渲染）。
+    /// </summary>
+    public void UpdatePetName(string? displayName)
+    {
+        NameText.Text = PetNameRules.Sanitize(displayName, PetNameRules.DefaultCatName);
+        ToolTip = NameText.Text;
+    }
 
     protected override void OnSourceInitialized(EventArgs e)
     {

@@ -177,6 +177,10 @@ public sealed class JsonSaveService : ISaveService
         // App 层防御回退 cat（存档原值保留）——防回退纪律：v10 字段必须逐字段拷贝，
         // 否则物种选择不续档（E6 教训，ApplyLoaded 漏拷 = 新字段静默丢失）
         Current.SpeciesId = model.SpeciesId ?? string.Empty;
+
+        // v11：宠物名字（E9）。加载侧再做一次统一清洗：空/超长/控制符/坏代理项全部收敛，
+        // 并按当前物种回退默认名（存档原值由迁移器保留语义，这里只保证内存模型可安全上线）。
+        Current.PetName = PetNameRules.Sanitize(model.PetName, PetNameRules.DefaultNameForSpecies(Current.SpeciesId));
     }
 
     /// <inheritdoc />

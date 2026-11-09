@@ -7,6 +7,7 @@ using System.Windows.Threading;
 using BongoCat.App.Styles;
 using BongoCat.Core.Config;
 using BongoCat.Core.Input;
+using BongoCat.Core.Save;
 using BongoCat.UI.Cosmetics;
 
 namespace BongoCat.UI;
@@ -39,12 +40,19 @@ public partial class StylePickerWindow : Window
     private string _selectedSpeciesId = SpeciesCatalog.DefaultSpeciesId;
     private string? _selectedStyleId;
     private int _idleTapSide; // 0/1 交替左右爪
+    private string _lastDefaultPetName = PetNameRules.DefaultCatName;
+    private bool _petNameTouched;
+    private bool _suppressPetNameTouched;
 
     /// <summary>确认/跳过后生效的物种 id（调用方读取写入存档）。</summary>
     public string? SelectedSpeciesId => _selectedSpeciesId;
 
     /// <summary>确认/跳过后生效的风格 id（调用方读取写入存档）。</summary>
     public string? SelectedStyleId => _selectedStyleId;
+
+    /// <summary>确认/跳过后生效的宠物名（已清洗；空输入回退当前物种默认名）。</summary>
+    public string SelectedPetName => PetNameRules.Sanitize(
+        PetNameBox.Text, PetNameRules.DefaultNameForSpecies(_selectedSpeciesId));
 
     public StylePickerWindow(StyleCatalog styles, SpeciesCatalog species)
     {
@@ -59,9 +67,29 @@ public partial class StylePickerWindow : Window
 
         RebuildCards();
 
+        // E9：名字输入预填物种默认名；用户主动改写后切物种不覆盖，未改写则跟随页签更新
+        _lastDefaultPetName = PetNameRules.DefaultNameForSpecies(_selectedSpeciesId);
+        SetPetNameBox(_lastDefaultPetName);
+        PetNameBox.TextChanged += (_, _) =>
+        {
+            if (!_suppressPetNameTouched)
+            {
+                _petNameTouched = true;
+            }
+        };
+
         // 只动画选中卡（低配降级方案）：4s 一次自动轻敲，未选卡纯静态
         _idleTapTimer = new DispatcherTimer { Interval = IdleTapInterval };
         _idleTapTimer.Tick += (_, _) => PlayIdleTap();
+    }
+
+    /// <summary>程序化写名字框（不把预填当成用户编辑）。</summary>
+    private void SetPetNameBox(string name)
+    {
+        _suppressPetNameTouched = true;
+        PetNameBox.Text = name;
+        PetNameBox.CaretIndex = name.Length;
+        _suppressPetNameTouched = false;
     }
 
     /// <summary>构建一个物种页签（猫 🐱 / 恐龙 🦖 / 阿瓜 = clay 缩略图；点击切换物种，不清空风格选择）。</summary>
@@ -120,6 +148,17 @@ public partial class StylePickerWindow : Window
 
         _selectedSpeciesId = speciesId;
         RebuildCards();
+
+        // 名字预填跟随物种：用户没改过、清空、或仍是上一个物种默认名时更新
+        string nextDefault = PetNameRules.DefaultNameForSpecies(speciesId);
+        string currentName = PetNameBox.Text;
+        if (!_petNameTouched || currentName.Length == 0 || currentName == _lastDefaultPetName)
+        {
+            SetPetNameBox(nextDefault);
+            _petNameTouched = false;
+        }
+
+        _lastDefaultPetName = nextDefault;
 
         if (_selectedStyleId is not null)
         {

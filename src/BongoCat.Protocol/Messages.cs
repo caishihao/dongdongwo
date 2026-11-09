@@ -71,8 +71,15 @@ public enum TapSide : byte
 /// 名册条目（Welcome 快照 / MemberJoin 广播共用）。
 /// GDD-09 §4：追加 species 字节（CatSpeciesByte 枚举，默认猫）——旧服务器下行 Welcome 无该
 /// 字节时解码端按猫回退（见 WelcomeMessage.Decode 的长短 payload 分支）。
+/// E9 取名：<see cref="PetName"/> 即宠物名（≤24B 新发），线上复用既有 UTF-8 长度前缀字段
+/// （字段名保留 DisplayName 语义别名），不新增线字段、不 bump 帧版本；旧服务器原样转发，
+/// 旧客户端当普通显示名展示——这是"零服务器改动 + 双向兼容"的最小侵入方案。
 /// </summary>
-public sealed record RosterEntry(ushort MemberId, string DisplayName, byte Species = CatSpeciesByte.Cat);
+public sealed record RosterEntry(ushort MemberId, string PetName, byte Species = CatSpeciesByte.Cat)
+{
+    /// <summary>线上字段名（历史兼容别名，与 <see cref="PetName"/> 同源）。</summary>
+    public string DisplayName => PetName;
+}
 
 /// <summary>协议消息基类：子类实现 payload 度量与写入（ADR-005：手写编码，不用反射序列化）。</summary>
 public abstract record ProtocolMessage(MsgType Type)

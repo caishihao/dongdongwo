@@ -37,6 +37,25 @@ public sealed class JsonSaveServiceRoundtripTests : IDisposable
     }
 
     [Fact]
+    public void v11宠物名_写读回环_清洗后保真且checksum有效()
+    {
+        // E9 防回退：PetName 必须经 ApplyLoaded 拷贝；写入前清洗（控制符/超长）
+        var writer = new JsonSaveService(directoryOverride: _dir);
+        writer.Current.SpeciesId = "agua";
+        writer.Current.PetName = "  阿瓜\u0000二世  ";
+        writer.Save();
+
+        string envelope = File.ReadAllText(Path.Combine(_dir, "save.json"));
+        Assert.Contains("PetName", envelope);
+
+        var reader = new JsonSaveService(directoryOverride: _dir);
+        reader.Load();
+
+        Assert.Equal("阿瓜二世", reader.Current.PetName);
+        Assert.Equal(SaveModel.CurrentSchemaVersion, reader.Current.SchemaVersion);
+    }
+
+    [Fact]
     public void v8字段_写读回环_逐字段保真()
     {
         var writer = new JsonSaveService(directoryOverride: _dir);
@@ -117,6 +136,34 @@ public sealed class JsonSaveServiceRoundtripTests : IDisposable
         Assert.Equal("sticker", reader.Current.CatStyleId);
         Assert.True(reader.Current.StyleChosen);
         Assert.Equal(SaveModel.CurrentSchemaVersion, reader.Current.SchemaVersion);
+    }
+
+    [Fact]
+    public void v10存档文件_加载迁移v11_按物种补宠物名_再保存checksum有效()
+    {
+        var v10Model = new SaveModel
+        {
+            SchemaVersion = 10,
+            SpeciesId = "agua",
+            Coins = 99,
+            CatStyleId = "chibi",
+            StyleChosen = true,
+        };
+
+        WriteSaveFile(10, v10Model);
+
+        var reader = new JsonSaveService(directoryOverride: _dir);
+        reader.Load();
+        Assert.Equal(SaveModel.CurrentSchemaVersion, reader.Current.SchemaVersion);
+        Assert.Equal("阿瓜", reader.Current.PetName); // v11 新增字段按物种补默认名
+        Assert.Equal(99, reader.Current.Coins);
+
+        // 迁移后保存：checksum 必须按新 payload 重算，重新加载无校验错误
+        reader.Save();
+        var reloaded = new JsonSaveService(directoryOverride: _dir);
+        reloaded.Load();
+        Assert.Equal("阿瓜", reloaded.Current.PetName);
+        Assert.Equal(SaveModel.CurrentSchemaVersion, reloaded.Current.SchemaVersion);
     }
 
     [Fact]

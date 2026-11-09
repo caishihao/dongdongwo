@@ -65,6 +65,12 @@ public sealed class TrayCommandController
     /// </summary>
     public event Action<string>? SpeciesChanged;
 
+    /// <summary>宠物名变更（E9；参数 = 清洗后的名字；UI/联机层订阅刷新本地展示）。</summary>
+    public event Action<string>? PetNameChanged;
+
+    /// <summary>请求重命名宠物（托盘"重命名"；UI 层弹小输入框后回调 <see cref="SetPetName"/>）。</summary>
+    public event Action? RenameRequested;
+
     /// <summary>猫窗口当前是否可见（菜单文案切换用）。</summary>
     public bool IsCatVisible { get; private set; } = true;
 
@@ -199,6 +205,25 @@ public sealed class TrayCommandController
         _save.Current.SpeciesId = speciesId;
         _save.Current.StyleChosen = true;
         SpeciesChanged?.Invoke(speciesId);
+        _save.Save();
+    }
+
+    /// <summary>请求打开重命名输入框（托盘菜单；UI 订阅弹窗）。</summary>
+    public void RequestRename() => RenameRequested?.Invoke();
+
+    /// <summary>
+    /// 设置宠物名字并立即落盘（首登选择器 / 托盘重命名共用；E9）。
+    /// 统一经 <see cref="PetNameRules.Sanitize"/>：trim、去控制符、12 字素、UTF-8 ≤24 字节，
+    /// 空/全脏 → 当前物种默认名。改名只影响之后的名册快照（联机中下次进入房间生效，
+    /// 协议无改名消息——保持旧端兼容，见 06-multiplayer.md §6.3）。
+    /// </summary>
+    public void SetPetName(string rawName)
+    {
+        string name = PetNameRules.Sanitize(rawName, PetNameRules.DefaultNameForSpecies(_save.Current.SpeciesId));
+        _save.Current.PetName = name;
+        // 兼容 v8 遗留显示名字段：两者语义已合并为宠物名，旧读取路径不会拿到过期值
+        _save.Current.MpDisplayName = name;
+        PetNameChanged?.Invoke(name);
         _save.Save();
     }
 }

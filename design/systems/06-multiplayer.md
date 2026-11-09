@@ -52,8 +52,8 @@
 |---|---|---|---|
 | DISCOVER | C→广播 | {roomCode?} | UDP 发现；带 roomCode 则定向 |
 | OFFER | C→H | {name, uuid} | 请求加入 |
-| WELCOME | H→C | {yourSlot, layoutMode, members[]} | 分配槽位与全量成员快照 |
-| MEMBER_JOIN / MEMBER_LEAVE | H→All | {member} | 成员变更 |
+| WELCOME | H→C | {yourSlot, layoutMode, members[]} | 分配槽位与全量成员快照；members[].name = 宠物名 |
+| MEMBER_JOIN / MEMBER_LEAVE | H→All | {member} | 成员变更（name = 宠物名） |
 | LAYOUT_SET | H→All | {mode, slots{uuid→normPos}} | 排布变更/重排 |
 | CAT_STATE | C→H→All | {outfit{skin,hat,bongos}, mirror} | 装扮快照，变更时发 |
 | CAT_TAP | C→H→All | {side} | 敲击同步（低优先级，可丢） |
@@ -62,6 +62,16 @@
 | PING/PONG | 双向 | {ts} | RTT 测量，UI 显示信号格 |
 | SESSION_END | H→All | {reason} | 房主结束会话 |
 | KICK | H→C | {reason} | 房主移除成员 |
+
+### 6.3.1 宠物名（E9，向后兼容扩展）
+- **名字字段**：名册条目/Hello/MemberJoin 的 `name` 语义升级为**宠物名**，新客户端发送上限
+  **UTF-8 24 字节**（12 个字素封顶，CJK 8 字）；接收端仍接受旧客户端的 48 字节显示名，
+  展示层按 `PetNameRules` 清洗，空/坏名回退物种默认名。
+- **不改线格式**：复用既有 UTF-8 长度前缀名称字段，**不新增字段、不 bump 帧版本**。
+  旧服务器只当普通显示名转发；旧客户端只当普通名字展示——新→旧、旧→新均不断连。
+- **改名时机**：房间内改名不新增广播消息（未知消息类型会让旧客户端断开）；
+  本地成员表即时刷新，**对端在下次进入房间收到 Welcome 名册快照时生效**。
+- **服务器**：无需改动（哑中继按既有 name 字段透传）。
 
 ### 6.4 带宽估算
 8 只猫稳态：心跳 8×0.5B/s 有效负载 + 敲击事件（峰值 8 键/s × ~60B）≈ **< 2 KB/s**，可忽略。

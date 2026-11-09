@@ -1,34 +1,39 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using BongoCat.App;
+using BongoCat.Core.Config;
 using BongoCat.Core.Net;
+using BongoCat.Core.Save;
 using BongoCat.Protocol;
 
 namespace BongoCat.UI;
 
 /// <summary>
-/// 多人联机窗口（E8）：服务器地址/显示名/房间码配置 → 创建/加入；成员列表与连接状态展示。
-/// 输入初值取存档 v8 字段（MpServerAddress/MpDisplayName/MpLastRoomCode），加入成功即回写持久化。
+/// 多人联机窗口（E8）：服务器地址/宠物名/房间码配置 → 创建/加入；成员列表与连接状态展示。
+/// E9：显示名升级为宠物名（只读回显，托盘「重命名」修改）；成员列表展示「名字 + 物种」。
+/// 输入初值取存档字段（MpServerAddress/PetName/MpLastRoomCode），加入成功即回写持久化。
 /// 全部事件经 Dispatcher 跳 UI 线程（Coordinator 事件在客户端后台线程触发）。
 /// </summary>
 public partial class MultiplayerWindow : Window
 {
     private readonly MultiplayerCoordinator _mp;
+    private readonly SpeciesCatalog _species;
     private readonly Action<string>? _log;
     private readonly ObservableCollection<string> _memberNames = [];
 
-    public MultiplayerWindow(MultiplayerCoordinator mp, Action<string>? log = null)
+    public MultiplayerWindow(MultiplayerCoordinator mp, SpeciesCatalog species, Action<string>? log = null)
     {
         InitializeComponent();
         _mp = mp;
+        _species = species;
         _log = log;
 
-        // 存档回填（v8 字段：地址空 = 功能未配置，占位提示；显示名空回退"猫猫"）
+        // 存档回填（地址空 = 功能未配置，占位提示；宠物名空由当前物种默认名兜底）
         ServerBox.Text = _mp.SaveCurrent.MpServerAddress;
         ServerBox.Tag = "如 123.207.0.1:9527";
-        NameBox.Text = string.IsNullOrEmpty(_mp.SaveCurrent.MpDisplayName) ? "猫猫" : _mp.SaveCurrent.MpDisplayName;
         RoomCodeBox.Text = _mp.SaveCurrent.MpLastRoomCode;
         MemberList.ItemsSource = _memberNames;
+        RefreshPetName();
 
         _mp.StateChanged += OnMpStateChanged;
         _mp.MembersChanged += OnMpMembersChanged;
@@ -45,21 +50,23 @@ public partial class MultiplayerWindow : Window
         };
     }
 
+    /// <summary>E9：托盘改名后刷新只读回显（窗口打开期间即时生效）。</summary>
+    public void RefreshPetName()
+    {
+        NameBox.Text = PetNameRules.Sanitize(
+            _mp.SaveCurrent.PetName, _mp.SaveCurrent.DefaultPetName);
+    }
+
     private void OnJoinClick(object sender, RoutedEventArgs e)
     {
         string server = ServerBox.Text.Trim();
-        string name = NameBox.Text.Trim();
+        string name = PetNameRules.Sanitize(
+            _mp.SaveCurrent.PetName, _mp.SaveCurrent.DefaultPetName);
         string room = RoomCodeBox.Text.Trim();
 
         if (server.Length == 0)
         {
             StateText.Text = "请先填写中继服务器地址（IP 或域名）";
-            return;
-        }
-
-        if (name.Length == 0)
-        {
-            StateText.Text = "请先填写显示名";
             return;
         }
 
@@ -126,11 +133,25 @@ public partial class MultiplayerWindow : Window
         foreach ((ushort id, string name) in _mp.Members.OrderBy(kv => kv.Key))
         {
             bool self = id == _mp.MyMemberId;
-            _memberNames.Add(self ? $"#{id} {name}（我）" : $"#{id} {name}");
+            string speciesName = SpeciesNameFor(id);
+            string prefix = self ? $"#{id} {name}（我）" : $"#{id} {name}";
+            _memberNames.Add($"{prefix} · {speciesName}");
         }
 
         RoomCodeText.Text = _mp.RoomCode;
+        RefreshPetName();
         _log?.Invoke($"[Mp] 成员列表刷新：{string.Join("、", _memberNames)}");
+    }
+
+    /// <summary>成员物种显示名：自己读存档，远端读最近 CAT_STATE 缓存；未知回退猫。</summary>
+    private string SpeciesNameFor(ushort memberId)
+    {
+        byte speciesByte = memberId == _mp.MyMemberId
+            ? _species.ToByte(_mp.SaveCurrent.SpeciesId)
+            : _mp.TryGetRemoteSpecies(memberId) ?? CatSpeciesByte.Cat;
+        return _species.TryGetByByte(CatSpeciesByte.Normalize(speciesByte), out SpeciesPack pack)
+            ? pack.Name
+            : PetNameRules.DefaultCatName;
     }
 
     private void OnMpNotification(string text)

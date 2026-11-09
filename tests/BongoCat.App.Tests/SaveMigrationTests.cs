@@ -408,6 +408,62 @@ public class SaveMigrationTests
     }
 
     [Fact]
+    public void v10存档_迁移到v11_按物种补默认宠物名_既有字段保留()
+    {
+        // E9：v10 无 PetName → 按当前物种补默认名；金币/物种/风格/联机字段一律不动
+        var v10 = new SaveModel
+        {
+            SchemaVersion = 10,
+            SpeciesId = "dino",
+            CatStyleId = "sticker",
+            StyleChosen = true,
+            Coins = 321,
+            MpDisplayName = "布丁",
+            MpLastRoomCode = "A7K2MQ",
+        };
+
+        SaveMigrator.MigrateToCurrent(v10);
+
+        Assert.Equal(11, v10.SchemaVersion);
+        Assert.Equal("小恐龙", v10.PetName);
+        Assert.Equal("dino", v10.SpeciesId);
+        Assert.Equal("sticker", v10.CatStyleId);
+        Assert.True(v10.StyleChosen);
+        Assert.Equal(321, v10.Coins);
+        Assert.Equal("布丁", v10.MpDisplayName);
+        Assert.Equal("A7K2MQ", v10.MpLastRoomCode);
+    }
+
+    [Fact]
+    public void v11脏宠物名_迁移器清洗_超长控制符空白全部收敛()
+    {
+        var dirty = new SaveModel
+        {
+            SchemaVersion = 11,
+            SpeciesId = "agua",
+            PetName = "  \u0000阿瓜超长名字十二个字了 ",
+        };
+
+        SaveMigrator.MigrateToCurrent(dirty);
+
+        Assert.Equal(SaveModel.CurrentSchemaVersion, dirty.SchemaVersion);
+        Assert.Equal("阿瓜超长名字十二", dirty.PetName); // CJK 3B/字 → 24 字节上限保留 8 字
+        Assert.Equal(24, System.Text.Encoding.UTF8.GetByteCount(dirty.PetName));
+        Assert.DoesNotContain('\u0000', dirty.PetName);
+        Assert.False(dirty.PetName.StartsWith(' '));
+    }
+
+    [Fact]
+    public void v11空宠物名_按当前物种回退默认名()
+    {
+        var empty = new SaveModel { SchemaVersion = 11, SpeciesId = "dino", PetName = "   " };
+
+        SaveMigrator.MigrateToCurrent(empty);
+
+        Assert.Equal("小恐龙", empty.PetName);
+    }
+
+    [Fact]
     public void 非法尺寸档位_无论来源版本_收敛到100()
     {
         var bad = new SaveModel { SchemaVersion = 4, WindowScale = 2.7 };

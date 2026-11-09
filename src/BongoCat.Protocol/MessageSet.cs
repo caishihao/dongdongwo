@@ -12,6 +12,12 @@ public sealed record HelloMessage(string DisplayName, string RoomCode) : Protoco
     /// <summary>显示名字节上限（u8 前缀内的服务器校验上限；UI 输入框另做长度限制）。</summary>
     public const int DisplayNameMaxBytes = 48;
 
+    /// <summary>E9：新客户端宠物名发送上限（与 <see cref="PetNameLimits.MaxUtf8Bytes"/> 同源）。</summary>
+    public const int PetNameMaxBytes = PetNameLimits.MaxUtf8Bytes;
+
+    /// <summary>E9：宠物名（与线上 DisplayName 同源；Hello 的显示名字段即宠物名）。</summary>
+    public string PetName => DisplayName;
+
     /// <summary>房间码固定 6 字符。</summary>
     public const int RoomCodeLength = 6;
 
@@ -192,6 +198,9 @@ public sealed record WelcomeMessage(
 
 public sealed record MemberJoinMessage(ushort MemberId, string DisplayName) : ProtocolMessage(MsgType.MemberJoin)
 {
+    /// <summary>E9：宠物名（与线上 DisplayName 同源；旧客户端也把它当普通名字展示）。</summary>
+    public string PetName => DisplayName;
+
     public override int MeasurePayload() => 2 + StringSize(DisplayName);
 
     public override void WritePayload(Span<byte> dest)

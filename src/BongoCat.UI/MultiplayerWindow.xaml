@@ -24,8 +24,14 @@
         <TextBox x:Name="ServerBox" Margin="0,4,0,8" Padding="6,4"
                  ToolTip="云服务器 IP 或域名，可带端口（默认 9527）"/>
 
-        <TextBlock Text="显示名" FontSize="12" Foreground="{DynamicResource Text.Primary}"/>
-        <TextBox x:Name="NameBox" MaxLength="16" Margin="0,4,0,8" Padding="6,4"/>
+        <TextBlock Text="我的名字（宠物名，托盘菜单「重命名」修改）" FontSize="12"
+                   Foreground="{DynamicResource Text.Primary}"/>
+        <TextBox x:Name="NameBox" IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                 Focusable="False" Margin="0,4,0,8" Padding="6,4"
+                 Background="{DynamicResource Bg.Card}"
+                 BorderBrush="{DynamicResource Border.Card}"
+                 Foreground="{DynamicResource Text.Primary}"
+                 ToolTip="名字在托盘菜单「重命名」里修改；加入房间后对端会看到该名字 + 物种"/>
 
         <TextBlock Text="房间码（创建房间留空）" FontSize="12" Foreground="{DynamicResource Text.Primary}"/>
         <TextBox x:Name="RoomCodeBox" MaxLength="6" Margin="0,4,0,12" Padding="6,4"

@@ -173,10 +173,11 @@ public sealed class MultiplayerCoordinator : IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(serverAddress);
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
 
-        displayName = displayName.Trim();
+        SaveModel save = _save.Current;
+        // E9：名册名字（宠物名）统一清洗到 UTF-8 ≤24 字节；旧调用方传显示名也兼容
+        displayName = PetNameRules.Sanitize(displayName, PetNameRules.DefaultNameForSpecies(save.SpeciesId));
         roomCode = roomCode.Trim().ToUpperInvariant();
 
-        SaveModel save = _save.Current;
         save.MpServerAddress = serverAddress.Trim();
         save.MpDisplayName = displayName;
         _save.Save();
@@ -343,6 +344,32 @@ public sealed class MultiplayerCoordinator : IDisposable
     /// <summary>本机物种字节（存档 SpeciesId → species.json ByteId；未知 id 回退 cat=0，GDD-09 §4）。</summary>
     private byte CurrentSpeciesByte() => _species?.ToByte(_save.Current.SpeciesId) ?? CatSpeciesByte.Cat;
 
+    /// <summary>名册名字清洗：空/超长/控制符 → 物种默认名（旧客户端 48 字节显示名也能安全展示）。</summary>
+    private static string SanitizeRosterName(string? displayName, byte speciesByte)
+        => PetNameRules.Sanitize(displayName, PetNameRules.DefaultNameForSpecies(CatSpeciesByte.Normalize(speciesByte)));
+
+    /// <summary>
+    /// E9 本地改名通知：联机中更新自己的成员表条目并刷新 UI。协议没有改名消息——
+    /// 对端在下次进入房间收到新名册快照时生效（避免新消息类型踢掉旧客户端，见文档）。
+    /// </summary>
+    public void NotifyPetNameChanged()
+    {
+        if (State != MpConnectionState.Joined)
+        {
+            return;
+        }
+
+        string name = PetNameRules.Sanitize(
+            _save.Current.PetName, PetNameRules.DefaultNameForSpecies(_save.Current.SpeciesId));
+        lock (_members)
+        {
+            _members[_client.MyMemberId] = name;
+        }
+
+        MembersChanged?.Invoke();
+        _log?.Invoke($"[Mp] 本地改名「{name}」；对端将在下次进入房间时看到新名字");
+    }
+
     // ── 客户端事件 → 状态维护 + 下行转发 ────────────────────────────────
 
     private void OnStateChanged(MpConnectionState state)
@@ -397,10 +424,16 @@ public sealed class MultiplayerCoordinator : IDisposable
         lock (_members)
         {
             _members.Clear();
-            _members[_client.MyMemberId] = _save.Current.MpDisplayName;
+            string selfName = string.IsNullOrWhiteSpace(_save.Current.PetName)
+                ? _save.Current.MpDisplayName
+                : _save.Current.PetName;
+            _members[_client.MyMemberId] = PetNameRules.Sanitize(
+                selfName, PetNameRules.DefaultNameForSpecies(_save.Current.SpeciesId));
             foreach (RosterEntry entry in roster)
             {
-                _members[entry.MemberId] = entry.DisplayName;
+                _members[entry.MemberId] = SanitizeRosterName(entry.DisplayName, entry.Species);
+                // 名册已带物种快照（服务器从 CatState 观测缓存）；先填，之后 CatState 再覆盖
+                _remoteSpecies[entry.MemberId] = entry.Species;
             }
         }
 
@@ -411,7 +444,8 @@ public sealed class MultiplayerCoordinator : IDisposable
         // 已在房间内的成员逐个上桌（远程猫窗口由 UI 建窗；远端首个 CatState 会归位）
         foreach (RosterEntry entry in roster)
         {
-            RemoteMemberJoined?.Invoke(entry.MemberId, entry.DisplayName);
+            RemoteMemberJoined?.Invoke(entry.MemberId, PetNameRules.Sanitize(
+                entry.DisplayName, PetNameRules.DefaultNameForSpecies(entry.Species)));
         }
 
         // E8 追加：加入成功立即广播自己的装扮三元组（等价于"背包关闭后的初始同步"，
@@ -424,14 +458,16 @@ public sealed class MultiplayerCoordinator : IDisposable
 
     private void OnMemberJoined(ushort memberId, string displayName)
     {
+        // 新成员 species 尚未随 MemberJoin 下发（服务器在首个 CatState 观测），先按猫回退
+        string name = SanitizeRosterName(displayName, CatSpeciesByte.Cat);
         lock (_members)
         {
-            _members[memberId] = displayName;
+            _members[memberId] = name;
         }
 
         MembersChanged?.Invoke();
-        RemoteMemberJoined?.Invoke(memberId, displayName);
-        NotificationRaised?.Invoke($"「{displayName}」加入了房间");
+        RemoteMemberJoined?.Invoke(memberId, name);
+        NotificationRaised?.Invoke($"「{name}」加入了房间");
     }
 
     private void OnMemberLeft(ushort memberId)
@@ -481,11 +517,18 @@ public sealed class MultiplayerCoordinator : IDisposable
             _log?.Invoke($"[Mp] 远端 species 字节 {speciesByte} 无法解析，回退 cat");
         }
 
+        bool speciesChanged = !_remoteSpecies.TryGetValue(memberId, out byte previousSpecies) ||
+                              previousSpecies != species;
         _remoteStyles[memberId] = style;
         _remoteSpecies[memberId] = species;
         RemoteCatStateReceived?.Invoke(memberId, x, y);
         RemoteStyleReceived?.Invoke(memberId, style);
         RemoteSpeciesReceived?.Invoke(memberId, species);
+        if (speciesChanged)
+        {
+            // E9：成员列表「名字 + 物种」随物种首次到达/变化刷新
+            MembersChanged?.Invoke();
+        }
 
         // GDD-09：物种到位后按新物种重洗装扮缓存（dino_default 等 speciesOnly 物品，
         // 装扮同步早于物种同步到达时曾被按默认物种清洗——现在重洗一次收敛正确渲染）

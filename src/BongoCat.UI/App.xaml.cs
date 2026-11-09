@@ -214,6 +214,17 @@ public partial class App : System.Windows.Application
             mp.NotifyStyleChanged();
         };
 
+        // E9：宠物名变更 → 本地联机成员表即时刷新（对端在下次进入房间时收到新名册；
+        // 协议无改名消息，避免未知消息类型踢掉旧客户端）。
+        trayCommands.PetNameChanged += _ =>
+        {
+            mp.NotifyPetNameChanged();
+            _multiplayerWindow?.RefreshPetName();
+        };
+
+        // E9：托盘"重命名" → 小输入框（清洗/落盘仍走 TrayCommandController 单一写入路径）
+        trayCommands.RenameRequested += ShowRenameWindow;
+
         // GDD-08 §3 / GDD-09 §3：首启"第 0 步：选你的伙伴"（教程前置；触发条件 = TutorialCompleted==false
         // 且 StyleChosen==false，矩阵见 StylePickerPolicy——选过风格没做完教程不重复弹）。
         // 确认/跳过后 SetCatSpecies + SetCatStyle 写入存档（StyleChosen=true），窗口 OnLoaded 会读到所选形象。
@@ -225,7 +236,9 @@ public partial class App : System.Windows.Application
             string chosenStyle = picker.SelectedStyleId ?? StyleCatalog.DefaultStyleId;
             trayCommands.SetCatSpecies(chosenSpecies); // 跳过 = (cat, clay)（GDD-09 §3.1）
             trayCommands.SetCatStyle(chosenStyle);
-            FileLog.Write($"[Species] 首启形象选择完成：species={chosenSpecies} style={chosenStyle}");
+            trayCommands.SetPetName(picker.SelectedPetName); // E9：空输入 → 所选物种默认名
+            FileLog.Write($"[Species] 首启形象选择完成：species={chosenSpecies} style={chosenStyle} " +
+                          $"petName=\"{save.Current.PetName}\"");
         }
 
         // E2：托盘图标（NotifyIcon 需在 UI 线程创建；菜单命令经 TrayCommandController 路由）。
@@ -413,6 +426,7 @@ public partial class App : System.Windows.Application
         {
             _multiplayerWindow = new MultiplayerWindow(
                 _host!.Services.GetRequiredService<MultiplayerCoordinator>(),
+                _host!.Services.GetRequiredService<SpeciesCatalog>(),
                 FileLog.Write);
             _multiplayerWindow.Closed += (_, _) => _multiplayerWindow = null;
         }
@@ -420,6 +434,24 @@ public partial class App : System.Windows.Application
         _multiplayerWindow.Show();
         _multiplayerWindow.Activate();
         FileLog.Write("[App] 多人联机窗口已打开");
+    }
+
+    /// <summary>E9 托盘"重命名"：小输入框 → SetPetName（清洗 + 落盘 + 广播）。</summary>
+    private void ShowRenameWindow()
+    {
+        var save = _host!.Services.GetRequiredService<ISaveService>();
+        string fallback = PetNameRules.DefaultNameForSpecies(save.Current.SpeciesId);
+        string current = PetNameRules.Sanitize(save.Current.PetName, fallback);
+        var dialog = new RenamePetWindow(current, fallback)
+        {
+            Owner = _host.Services.GetRequiredService<MainWindow>(),
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            _host.Services.GetRequiredService<TrayCommandController>().SetPetName(dialog.PetName);
+            FileLog.Write($"[PetName] 重命名完成：\"{save.Current.PetName}\"");
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)

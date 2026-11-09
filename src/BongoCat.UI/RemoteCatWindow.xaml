@@ -23,18 +23,21 @@
     -->
 
     <Grid>
-        <Viewbox Stretch="Uniform" Margin="4,2,4,14">
+        <Viewbox Stretch="Uniform" Margin="4,18,4,2">
             <Canvas x:Name="CatCanvas" Width="240" Height="200" Background="Transparent">
                 <!-- 风格模板根画布：由 StyleRenderer.ApplyStyle 装载（与主猫同模板同部件契约） -->
                 <Canvas x:Name="StyleHost" Width="240" Height="200" Background="Transparent"/>
             </Canvas>
         </Viewbox>
 
-        <!-- 名字牌（底部横条） -->
-        <Border x:Name="NamePlate" VerticalAlignment="Bottom" Margin="8,0,8,2"
-                CornerRadius="6" Background="#CC2B1A0E" Padding="6,1">
-            <TextBlock x:Name="NameText" Foreground="#FFF5E9DC" FontSize="11"
-                       TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
+        <!-- 名字牌（E9：宠物头顶上方，半透明主题色，字号 11，超长省略） -->
+        <Border x:Name="NamePlate" VerticalAlignment="Top" HorizontalAlignment="Center"
+                MaxWidth="104" Margin="6,2,6,0" CornerRadius="6" Opacity="0.86"
+                Background="{DynamicResource Bg.Card}"
+                BorderBrush="{DynamicResource Border.Card}" BorderThickness="1"
+                Padding="6,1">
+            <TextBlock x:Name="NameText" Foreground="{DynamicResource Text.Primary}" FontSize="11"
+                       TextAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="90"/>
         </Border>
     </Grid>
 </Window>
