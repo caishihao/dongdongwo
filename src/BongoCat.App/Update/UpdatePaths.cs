@@ -6,7 +6,7 @@ namespace BongoCat.App.Update;
 public static class UpdatePaths
 {
     /// <summary>更新分发基址（RelayServer 9438 HTTP 端点；烟测可覆盖）。</summary>
-    public const string DefaultUpdateBaseUrl = "http://your.server.ip:9438";
+    public const string DefaultUpdateBaseUrl = "http://124.222.175.227:9438";
 
     /// <summary>默认更新分发基址（可被 BONGOCAT_UPDATE_URL 环境变量覆盖——烟测/私有部署）。</summary>
     public static string ResolveUpdateBaseUrl()

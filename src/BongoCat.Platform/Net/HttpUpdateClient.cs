@@ -21,6 +21,9 @@ public sealed class HttpUpdateClient : IUpdateTransferClient
         _http = httpClient ?? new HttpClient(new HttpClientHandler
         {
             AutomaticDecompression = DecompressionMethods.None,
+            // 更新服务器是固定 IP + 自有端口，不该经过系统代理：
+            // 系统代理（Clash 等）对该 IP:9438 返回 502，会让所有客户端永远收不到更新。
+            UseProxy = false,
         });
         _ownsHttpClient = httpClient is null;
         _http.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
