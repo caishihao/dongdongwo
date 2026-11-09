@@ -1,0 +1,233 @@
+<Window x:Class="BongoCat.UI.PassWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:BongoCat.UI.Converters"
+        Title="咚咚窝 · 通行证 PawPass"
+        Width="760" Height="480"
+        MinWidth="760" MinHeight="480"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource Bg.Window}"
+        ResizeMode="NoResize">
+
+    <!--
+      E6 通行证窗口（普通窗口：非置顶、可关闭，与桌宠/背包窗口互不影响）。
+      风格：E7 起全部走主题键 DynamicResource（App.Theming.UiThemeKeys），
+      与背包窗口同主题语言；品质色仍由 HexToBrushConverter 提供，不随主题变化。
+      MVVM：状态在 PassViewModel；里程碑节点由 ItemsControl 横向排列（左→右按 XP 阈值），
+      每节点上下双格（上 = 免费轨 / 下 = 高级轨），三态着色（按轨独立 DataTrigger，防串色）：
+        Claimed  已领取 ✓（Success 收敛）  Claimable 可领取（Amber 高亮 + 点击领取）  Locked 未达成（半透明灰）
+      本 code-behind 仅构造函数装配 DataContext。
+    -->
+
+    <Window.Resources>
+        <conv:HexToBrushConverter x:Key="HexToBrush"/>
+
+        <!-- E4 开箱/掉落 chip 复用模板（品质色点 + 名称 + 角标） -->
+        <DataTemplate x:Key="ResultChipTemplate">
+            <StackPanel Orientation="Horizontal" Margin="0,0,10,0">
+                <Ellipse Width="10" Height="10" VerticalAlignment="Center"
+                         Fill="{Binding QualityHex, Converter={StaticResource HexToBrush}}"/>
+                <TextBlock Text="{Binding DisplayName}" FontSize="12" Margin="5,0,0,0"
+                           Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding Badge}" FontSize="11" Margin="4,0,0,0"
+                           Foreground="{Binding QualityHex, Converter={StaticResource HexToBrush}}"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- 免费轨格（整格即按钮；可领取琥珀高亮，禁用半透明 = 未达成灰） -->
+        <Style x:Key="FreeCellButton" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource Bg.Card}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Border.Card}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Padding" Value="2"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="cellBorder" CornerRadius="8"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="cellBorder" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="cellBorder" Property="Opacity" Value="0.55"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding FreeState}" Value="Claimable">
+                    <Setter Property="Background" Value="{DynamicResource Accent.HighlightBg}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Accent.Amber}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 高级轨格（同免费轨，状态源 = PremiumState，防双轨串色） -->
+        <Style x:Key="PremiumCellButton" TargetType="Button" BasedOn="{StaticResource FreeCellButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding PremiumState}" Value="Claimable">
+                    <Setter Property="Background" Value="{DynamicResource Accent.HighlightBg}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Accent.Amber}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 里程碑节点（上 = 免费轨 / 中 = 等级 / 下 = 高级轨） -->
+        <DataTemplate x:Key="MilestoneNodeTemplate">
+            <Border Width="96" Margin="3" Padding="4" CornerRadius="10"
+                    Background="{DynamicResource Bg.Card}" BorderBrush="{DynamicResource Border.Card}" BorderThickness="2">
+                <StackPanel>
+                    <!-- 免费轨格（可领取才可点；灰格仍显示奖励预览） -->
+                    <Button Height="66" Style="{StaticResource FreeCellButton}"
+                            Command="{Binding ClaimFreeCommand}"
+                            ToolTip="{Binding ThresholdTooltip}">
+                        <StackPanel>
+                            <Ellipse Width="10" Height="10" HorizontalAlignment="Left"
+                                     Fill="{Binding FreeRewardHex, Converter={StaticResource HexToBrush}}"/>
+                            <TextBlock Text="{Binding FreeRewardText}" FontSize="11" Foreground="{DynamicResource Text.Primary}"
+                                       TextAlignment="Center" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                            <TextBlock FontSize="10" TextAlignment="Center" Text="点击领取"
+                                       Foreground="{DynamicResource Accent.Amber}" FontWeight="Bold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding FreeState}" Value="Claimable">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock FontSize="10" TextAlignment="Center" Text="已领取 ✓"
+                                       Foreground="{DynamicResource Accent.Success}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding FreeState}" Value="Claimed">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- 等级徽章 -->
+                    <Border Margin="0,4" Padding="8,2" CornerRadius="9"
+                            Background="{DynamicResource Button.AccentBg}" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding Level, StringFormat=Lv {0}}" FontSize="11" FontWeight="Bold"
+                                   Foreground="{DynamicResource Text.Primary}" TextAlignment="Center"/>
+                    </Border>
+
+                    <!-- 高级轨格（未解锁高级轨时整体灰置——解锁按钮在顶栏） -->
+                    <Button Height="66" Style="{StaticResource PremiumCellButton}"
+                            Command="{Binding ClaimPremiumCommand}"
+                            ToolTip="{Binding ThresholdTooltip}">
+                        <StackPanel>
+                            <Ellipse Width="10" Height="10" HorizontalAlignment="Left"
+                                     Fill="{Binding PremiumRewardHex, Converter={StaticResource HexToBrush}}"/>
+                            <TextBlock Text="{Binding PremiumRewardText}" FontSize="11" Foreground="{DynamicResource Text.Primary}"
+                                       TextAlignment="Center" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                            <TextBlock FontSize="10" TextAlignment="Center" Text="点击领取"
+                                       Foreground="{DynamicResource Accent.Amber}" FontWeight="Bold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding PremiumState}" Value="Claimable">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock FontSize="10" TextAlignment="Center" Text="已领取 ✓"
+                                       Foreground="{DynamicResource Accent.Success}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding PremiumState}" Value="Claimed">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <DockPanel Margin="10">
+
+        <!-- ── 顶栏：赛季信息 + 等级进度 + 高级轨解锁 ── -->
+        <Border DockPanel.Dock="Top" Margin="0,0,0,8" Padding="12,8" CornerRadius="10"
+                Background="{DynamicResource Bg.Card}" BorderBrush="{DynamicResource Border.Card}" BorderThickness="2">
+            <StackPanel>
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Padding="10,4" VerticalAlignment="Center"
+                            Command="{Binding UnlockPremiumCommand}"
+                            Content="{Binding PremiumButtonText}"
+                            ToolTip="高级轨奖励需一次性金币解锁（无内购；赛季内有效，赛季切换后重新解锁）"
+                            Background="{DynamicResource Button.AccentBg}" BorderBrush="{DynamicResource Button.AccentBorder}" Foreground="{DynamicResource Text.Primary}"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SeasonText}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource Text.Primary}"/>
+                        <TextBlock Text="{Binding LevelXpText}" FontSize="13" Foreground="{DynamicResource Text.Primary}"
+                                   Margin="16,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </DockPanel>
+                <ProgressBar Height="10" Margin="0,6,0,0" Minimum="0" Maximum="1"
+                             Value="{Binding XpProgressRatio, Mode=OneWay}"
+                             Foreground="{DynamicResource Accent.Amber}" Background="{DynamicResource Border.Card}" BorderThickness="0"/>
+                <TextBlock Text="{Binding QuestText}" FontSize="11" Foreground="{DynamicResource Text.Primary}"
+                           Margin="0,6,0,0" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ── 底栏：最近事件 + 领取结果 chip ── -->
+        <Border DockPanel.Dock="Bottom" Margin="0,8,0,0" Padding="12,6" CornerRadius="10"
+                Background="{DynamicResource Bg.Card}" BorderBrush="{DynamicResource Border.Card}" BorderThickness="2">
+            <StackPanel>
+                <TextBlock Text="{Binding LastEventText}" FontSize="12" Foreground="{DynamicResource Text.Primary}"
+                           TextTrimming="CharacterEllipsis"/>
+                <ItemsControl ItemsSource="{Binding ResultChips}" Margin="0,4,0,0"
+                              ItemTemplate="{StaticResource ResultChipTemplate}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <!-- ── 主体：里程碑横向列表（左→右按 XP 阈值；横向滚动）── -->
+        <ScrollViewer VerticalScrollBarVisibility="Disabled"
+                      HorizontalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Nodes}"
+                          ItemTemplate="{StaticResource MilestoneNodeTemplate}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

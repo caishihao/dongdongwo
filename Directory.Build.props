@@ -1,0 +1,10 @@
+<Project>
+  <!-- 全解决方案统一编译约定（architecture.md §4 路径作用域编码标准的基础开关） -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- 所有随机必须可注入（Core 规则）；分析级别保持 latest 以尽早暴露问题 -->
+    <AnalysisLevel>latest</AnalysisLevel>
+  </PropertyGroup>
+</Project>

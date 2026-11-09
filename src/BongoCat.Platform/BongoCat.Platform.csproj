@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Platform 层：Win32 / 音频 / 存档实现，实现 Core/App 定义的接口，禁止反向依赖 UI -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Description>平台实现：键盘轮询、DWM 透明窗口、NAudio 合成音频、JSON 存档</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BongoCat.Core\BongoCat.Core.csproj" />
+    <!-- E8：多人协议编解码（Platform 网络客户端与 RelayServer 共用，杜绝序列化漂移） -->
+    <ProjectReference Include="..\BongoCat.Protocol\BongoCat.Protocol.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ADR-006：NAudio（MIT，纯托管）作为 V1 音频输出，接口按 WASAPI 能力面设计 -->
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <!-- E8：多人客户端发送队列 Channel 化（模式同 KeyPollingService 投递） -->
+    <PackageReference Include="System.Threading.Channels" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

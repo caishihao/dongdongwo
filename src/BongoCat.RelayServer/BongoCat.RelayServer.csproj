@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- RelayServer 层：云中继独立 exe（控制台，跨平台，可 linux-x64 自包含发布部署腾讯云）。
+       哑中继 + 房间登记：不理解消息 payload 语义，只做路由与服务器权威最小集。
+       禁止依赖 WPF / Core 之外的项目（协议编解码共用 BongoCat.Protocol，杜绝序列化漂移）。 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>BongoCat.RelayServer</RootNamespace>
+    <Description>BongoCat 云中继服务器（E8：房间码加入 + 消息转发 + 心跳踢出 + 空闲回收）</Description>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BongoCat.Protocol\BongoCat.Protocol.csproj" />
+  </ItemGroup>
+
+</Project>

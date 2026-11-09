@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 风格包烟测辅助工具：离屏渲染 6 风格预览图（生产同路径 StyleRenderer.ApplyStyle + ApplyOutfit）。
+       独立于主解决方案（不进 BongoCatReplica.sln），仅开发期使用；产物覆盖 analysis/style-previews/preview_*.png -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>BongoCat.StylePreview</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- UI 传递引用 App（styles.json 嵌入资源所在程序集），StyleCatalogLoader 可直达 -->
+    <ProjectReference Include="..\..\src\BongoCat.Core\BongoCat.Core.csproj" />
+    <ProjectReference Include="..\..\src\BongoCat.UI\BongoCat.UI.csproj" />
+  </ItemGroup>
+
+</Project>

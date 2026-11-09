@@ -1,0 +1,33 @@
+[Unit]
+Description=BongoCat Cloud Relay Server (E8 multi-cat room relay)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# 部署目录（可按需调整）：/opt/bongocat-relay/bongocat-relay
+# 前置要求：目录须 chown nobody:nogroup（下方 ReadWritePaths 只解除沙箱写限制、
+# 不解文件属主权限；root 属主目录会导致 relay.log 写入 UnauthorizedAccess 崩溃循环）
+WorkingDirectory=/opt/bongocat-relay
+ExecStart=/opt/bongocat-relay/bongocat-relay --port 9527
+# 崩溃/被杀自动拉起（systemd Restart=always）
+Restart=always
+RestartSec=3
+# 日志走 journal（journalctl -u bongocat-relay -f）；文件日志同目录 relay.log
+StandardOutput=journal
+StandardError=journal
+# 非特权用户运行（安全性：不需要 root，监听 9437 > 1024）
+User=nobody
+Group=nogroup
+# 优雅关闭：systemd 先发 SIGTERM，中继会把 Bye(ServerShutdown) 广播给全部会话再退出
+KillSignal=SIGTERM
+TimeoutStopSec=10
+# 基础加固
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/bongocat-relay
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

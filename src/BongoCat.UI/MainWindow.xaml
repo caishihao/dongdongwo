@@ -1,0 +1,49 @@
+<Window x:Class="BongoCat.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="咚咚窝"
+        Width="130" Height="110"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Topmost="True"
+        Background="Transparent"
+        Loaded="OnLoaded"
+        MouseLeftButtonDown="OnMouseLeftButtonDown"
+        MouseMove="OnMouseMove"
+        MouseLeftButtonUp="OnMouseLeftButtonUp">
+
+    <!--
+      透明窗口（ADR-001 方案 B）：AllowsTransparency=false + DWM ExtendFrameIntoClientArea(-1)。
+      WPF 内容走正常硬件渲染管线；未绘制区域由 DWM 合成为透明。
+
+      美术风格（GDD-08 风格包系统）：猫本体渲染由 StyleRenderer 装载（OnLoaded 按存档
+      CatStyleId 选模板；6 风格 = 黏土/贴纸/扁平/线稿/Q版/剪纸，全部原创绘制，
+      禁止复制任何现有产品形象）。本 XAML 只保留窗口壳 + 视口：
+      - 基准视口 240×200 逻辑画布（部件锚点坐标系，E1 用户拍板的 50% 显示尺寸不变）；
+      - 镜像 / 呼吸浮动 Transform 挂在 CatCanvas 上（GDD-01 §5/§6，跨风格共用）；
+      - 风格模板（6 层 body/face/bongos/pawL/pawR/hat，层预算 ≤8，ADR-003 部件化）
+        由 StyleArt 按风格构建，主猫与远程猫共用同一渲染器（单一数据源，GDD-08 §4）；
+      - 换装纪律（E3）：皮肤/鼓只改已命名形状的 Fill/Stroke（纯渲染属性，不触发
+        Layout 重算）；帽子为 CosmeticArt 预建画布切 Visibility（零几何重建）；
+      - 敲击纪律（ADR-003）：动画只动 RenderTransform/Opacity，参数来自 styles.json
+        （压深/时长/缓动/挤压/爪旋转数据驱动，CatTapAnimator）。
+    -->
+
+    <Viewbox Stretch="Uniform">
+        <Canvas x:Name="CatCanvas" Width="240" Height="200" Background="Transparent">
+            <Canvas.RenderTransform>
+                <TransformGroup>
+                    <!-- 镜像（GDD-01 §5：FlipVisuals） -->
+                    <ScaleTransform x:Name="MirrorScale" ScaleX="1" ScaleY="1"/>
+                    <!-- 呼吸浮动（GDD-01 §6：周期 2.4s） -->
+                    <TranslateTransform x:Name="BobTranslate"/>
+                </TransformGroup>
+            </Canvas.RenderTransform>
+
+            <!-- 风格模板根画布：OnLoaded 由 StyleRenderer.ApplyStyle 装载（含 6 层部件 + 换绑命名形状） -->
+            <Canvas x:Name="StyleHost" Width="240" Height="200" Background="Transparent"/>
+        </Canvas>
+    </Viewbox>
+</Window>

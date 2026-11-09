@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- UI 层渲染测试（GDD-09）：恐龙模板完整性（6 风格 × 物种）、hat 锚点合成钳制、
+       物种附属形状换绑。STA 线程跑 WPF 视觉树（DependencyObject/Freezable 需要）。 -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- UI 传递引用 App（styles.json / species.json 嵌入资源所在程序集） -->
+    <ProjectReference Include="..\..\src\BongoCat.UI\BongoCat.UI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+</Project>

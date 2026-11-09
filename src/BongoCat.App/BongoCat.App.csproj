@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- App 层：用例编排，仅依赖 Core，禁止直接 P/Invoke（architecture.md 分层规则） -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Description>用例编排、猫行为导演（CatDirector）</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BongoCat.Core\BongoCat.Core.csproj" />
+  </ItemGroup>
+
+  <!-- E3：物品定义随程序集嵌入（非文件系统 IO；ItemCatalogLoader 从清单流读取，
+       测试项目引用 App 即可读到同一份真实数据）；
+       E4：经济数值 economy.json 同模式嵌入（EconomyConfigLoader）；
+       E6：赛季配置 seasons/*.json 同模式嵌入（SeasonConfigLoader，可随版本热更 = 随版本发布更新）；
+       GDD-08：风格渲染参数 styles.json 同模式嵌入（StyleCatalogLoader）；
+       GDD-09：物种形体参数 species.json 同模式嵌入（SpeciesCatalogLoader） -->
+  <ItemGroup>
+    <EmbeddedResource Include="assets\items.json" />
+    <EmbeddedResource Include="assets\economy.json" />
+    <EmbeddedResource Include="assets\seasons\*.json" />
+    <EmbeddedResource Include="assets\styles.json" />
+    <EmbeddedResource Include="assets\species.json" />
+  </ItemGroup>
+
+</Project>

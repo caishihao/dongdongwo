@@ -1,0 +1,61 @@
+<Window x:Class="BongoCat.UI.StylePickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="咚咚窝 · 选你的伙伴"
+        Width="720" Height="444"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="ToolWindow"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Background="{DynamicResource Bg.Window}">
+
+    <!--
+      首启物种×风格选择器（GDD-09 §3"第 0 步：选你的伙伴"；教程前置步，GDD-07 三步计数不变）：
+      触发 = TutorialCompleted==false 且 StyleChosen==false（StylePickerPolicy，App 层单测）。
+      顶部两个物种页签（猫 🐱 / 恐龙 🦖）+ 下方 6 张风格卡（每卡内嵌"当前页签物种 × 该风格"预览）。
+      选择状态 = (species, style) 组合：切页签不清空风格选择（对比成本是"同一风格下的猫 vs 龙"）。
+      微动画采用低配降级方案：只动画选中卡（每 4s 一次自动轻敲，未选卡纯静态）。
+      单选：点击卡片 → 放大 1.15× + 金色描边（琥珀主题键）→"就决定它了"点亮；
+      跳过（右下角常驻）= (cat, clay)（GDD-09 §3.1，与教程时序完全兼容）。
+      确认/跳过后写入存档（SpeciesId + CatStyleId + StyleChosen=true）并进教程第 1 步。
+      配色走主题键 DynamicResource（E7 主题系统对本窗口同样生效）。
+    -->
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="欢迎来到咚咚窝 · 选你的伙伴" FontSize="18" FontWeight="Bold"
+                   Foreground="{DynamicResource Text.Primary}" HorizontalAlignment="Center"/>
+        <TextBlock Grid.Row="0" Text="以后随时可以在托盘菜单「形象」里更换" FontSize="12"
+                   Foreground="{DynamicResource Text.Secondary}" HorizontalAlignment="Center" Margin="0,26,0,0"/>
+
+        <!-- 物种页签行（GDD-09 §3.1：页签内嵌缩略剪影由卡片预览实时体现，页签本身用 emoji 标识） -->
+        <StackPanel x:Name="SpeciesTabsHost" Grid.Row="1" Orientation="Horizontal"
+                    HorizontalAlignment="Center" Margin="0,12,0,0">
+            <!-- 页签由 code-behind 按 species.json 物种表构建（单一数据源） -->
+        </StackPanel>
+
+        <UniformGrid x:Name="CardsHost" Grid.Row="2" Columns="6" Margin="0,10,0,0">
+            <!-- 卡片由 code-behind 按 styles.json 风格表构建（卡片 = 物种×风格预览 + 名称） -->
+        </UniformGrid>
+
+        <Grid Grid.Row="3" Margin="0,14,0,0">
+            <Button x:Name="ConfirmButton" Content="就决定它了" Width="140" Padding="0,8"
+                    HorizontalAlignment="Center" IsEnabled="False" FontSize="14" FontWeight="Bold"
+                    Background="{DynamicResource Button.AccentBg}"
+                    BorderBrush="{DynamicResource Button.AccentBorder}"
+                    Foreground="{DynamicResource Text.Primary}" Click="OnConfirm"/>
+            <Button Content="跳过（用黏土猫）" Width="120" Padding="0,6"
+                    HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="12"
+                    Background="{DynamicResource Bg.Card}"
+                    BorderBrush="{DynamicResource Border.Card}"
+                    Foreground="{DynamicResource Text.Secondary}" Click="OnSkip"/>
+        </Grid>
+    </Grid>
+</Window>

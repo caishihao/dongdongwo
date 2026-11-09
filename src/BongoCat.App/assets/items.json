@@ -1,0 +1,21 @@
+{
+  "comment": "E3 首批 12 件原创装扮（GDD-03 §6 数据驱动；品质色板见 Core QualityPalette）。artKey 约定与 id 同名——UI 层据此换绑 Geometry/填色组。",
+  "items": [
+    { "id": "hat_dev_cap", "slot": "hat", "quality": "common", "displayName": "程序员鸭舌帽", "artKey": "hat_dev_cap" },
+    { "id": "hat_beret", "slot": "hat", "quality": "uncommon", "displayName": "画家贝雷帽", "artKey": "hat_beret" },
+    { "id": "hat_santa", "slot": "hat", "quality": "rare", "displayName": "圣诞尖尖帽", "artKey": "hat_santa" },
+    { "id": "hat_graduation", "slot": "hat", "quality": "epic", "displayName": "学士方帽", "artKey": "hat_graduation" },
+    { "id": "hat_flower_crown", "slot": "hat", "quality": "legendary", "displayName": "春日花环", "artKey": "hat_flower_crown" },
+
+    { "id": "skin_cream", "slot": "skin", "quality": "common", "displayName": "奶油小猫", "artKey": "skin_cream" },
+    { "id": "skin_orange", "slot": "skin", "quality": "uncommon", "displayName": "橘子汽水", "artKey": "skin_orange" },
+    { "id": "skin_gray", "slot": "skin", "quality": "rare", "displayName": "烟灰团子", "artKey": "skin_gray" },
+    { "id": "skin_cow", "slot": "skin", "quality": "epic", "displayName": "奶牛纹布丁", "artKey": "skin_cow" },
+
+    { "id": "dino_default", "slot": "skin", "quality": "common", "displayName": "柚柚小恐龙", "artKey": "dino_default", "speciesOnly": "dino" },
+
+    { "id": "bongos_wood", "slot": "bongos", "quality": "common", "displayName": "原木小鼓", "artKey": "bongos_wood" },
+    { "id": "bongos_neon", "slot": "bongos", "quality": "rare", "displayName": "霓虹夜鼓", "artKey": "bongos_neon" },
+    { "id": "bongos_gold", "slot": "bongos", "quality": "legendary", "displayName": "鎏金庆典鼓", "artKey": "bongos_gold" }
+  ]
+}

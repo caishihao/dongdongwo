@@ -1,0 +1,39 @@
+# ===== 构建产物 =====
+bin/
+obj/
+deploy/publish/
+*.user
+*.suo
+
+# ===== 更新签名私钥（绝不入库；公钥硬编码在客户端 UpdateSignatureVerifier）=====
+deploy/keys/
+
+# ===== SSH 部署凭据（本地专用）=====
+deploy/ssh.local.json
+*.local.json
+!deploy/ssh.local.json.example
+
+# ===== 测试烟测残留 =====
+smoke-autoupdate/
+smoke-relay/
+smoke-appdata*/
+TestResults/
+*.log
+
+# ===== 会话/工具数据 =====
+.workbuddy/
+.vs/
+
+# ===== 参考用第三方游戏本体（不入库）=====
+BongoCat.exe
+BongoCat_Data/
+MonoBleedingEdge/
+UnityCrashHandler64.exe
+
+# ===== AI 参照图（含第三方角色参考，仅本地留存）=====
+analysis/**/ai-jimeng/
+analysis/**/ai-nailong/
+
+# ===== 分发产物兜底 =====
+*.zip
+*.exe

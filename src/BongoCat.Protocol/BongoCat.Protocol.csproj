@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Protocol 层：V3 局域网联机消息编解码（E1 仅建空壳，见 epics.md E8-S1） -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Description>联机二进制帧编解码（E1 空壳；V3 落实，两端共用避免序列化漂移）</Description>
+  </PropertyGroup>
+
+</Project>

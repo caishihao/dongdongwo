@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Platform 层单测（E7 起）：真 JsonSaveService 写读回环（E6 教训：FakeSaveService 测不出
+       ApplyLoaded 漏拷贝，真服务 + 临时目录回环才能守住"v7 字段必须续档"的防回退纪律）。
+       存档路径用 directoryOverride 指向临时目录，绝不触碰真实 %APPDATA% 存档。 -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BongoCat.Platform\BongoCat.Platform.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+</Project>

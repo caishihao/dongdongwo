@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "_comment": "GDD-09 §1/§2 物种形体参数表（权威数值源）。物种 = 形体层：渲染模板由 UI 层 StyleArt 按物种×风格构建；本表承载数据驱动参数（id/显示名/多人字节映射/hat 锚点增量/默认专属皮肤）。hatAnchorOffsetY 与 styles.json 风格层偏移相加合成（恐龙 -14 落位双角之间，GDD-09 §2.3；渲染侧对合成结果做窗体上缘钳制）。byteId 2~15 为第三物种预留段。",
+  "species": [
+    {
+      "id": "cat",
+      "name": "猫猫",
+      "byteId": 0,
+      "hatAnchorOffsetY": 0,
+      "defaultSkinId": ""
+    },
+    {
+      "id": "dino",
+      "name": "小恐龙",
+      "byteId": 1,
+      "hatAnchorOffsetY": -14,
+      "defaultSkinId": "dino_default"
+    }
+  ]
+}

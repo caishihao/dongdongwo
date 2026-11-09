@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Core 层：纯 BCL，零 WPF / Win32 / 文件 IO 依赖（architecture.md 分层规则） -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Description>猫桌宠领域模型与规则（纯逻辑层，可测试）</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- System.Threading.Channels：按键事件经 Channel 投递到 UI 线程（ADR-002） -->
+    <PackageReference Include="System.Threading.Channels" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- E8：多人客户端接口（Core/Net/IMultiplayerClient）引用协议类型（RosterEntry/TapSide/ByeReason）；
+         Protocol 为纯 BCL 项目（无第三方包），不破坏"Core 零外部依赖"的分层规则 -->
+    <ProjectReference Include="..\BongoCat.Protocol\BongoCat.Protocol.csproj" />
+  </ItemGroup>
+
+</Project>

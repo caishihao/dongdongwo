@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- UI 层：唯一 exe（WPF），MVVM + DI，不持有游戏状态（architecture.md 分层规则） -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- E2 托盘：用 BCL 自带 WinForms NotifyIcon（见 TrayIconController.cs 头注释的选型理由），不引第三方包 -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- 自换位：apply-update 参数在 Main 早期分流（Program.cs），禁用 XAML 生成版 Main -->
+    <StartupObject>BongoCat.UI.Program</StartupObject>
+    <AssemblyName>BongoCatRemix</AssemblyName>
+    <RootNamespace>BongoCat.UI</RootNamespace>
+    <Description>猫桌宠 WPF 应用入口（复刻 BongoCat 机制，全部原创实现）</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BongoCat.App\BongoCat.App.csproj" />
+    <ProjectReference Include="..\BongoCat.Core\BongoCat.Core.csproj" />
+    <ProjectReference Include="..\BongoCat.Platform\BongoCat.Platform.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+  </ItemGroup>
+
+  <!-- WPF + WinForms 混用：移除 WinForms 的隐式 global using，避免 Application/Point/Pen 等
+       与 WPF 同名类型冲突；托盘代码在 TrayIconController.cs 内显式 using System.Windows.Forms -->
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+</Project>

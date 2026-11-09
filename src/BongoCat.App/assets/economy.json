@@ -1,0 +1,23 @@
+{
+  "comment": "E5 经济参数（GDD-02 §6 数值框架 + E5 支出/保底/上限，全部数值以 design/systems/02-economy.md 为准）。改值即调，无需重编译业务逻辑；非法值由 EconomyConfig.ParseJson 防御拒绝。",
+  "keystroke": { "coinsPer": 250, "dailyCap": 500 },
+  "drip": { "secondsPerCoin": 120 },
+  "dailyLoginBonus": 50,
+  "idleDrop": {
+    "intervalMinutes": 15,
+    "nothing": 0.50, "coinPack": 0.30, "item": 0.20,
+    "coinPackMin": 15, "coinPackMax": 35,
+    "weights": { "common": 0.70, "uncommon": 0.22, "rare": 0.07, "epic": 0.009, "legendary": 0.001 }
+  },
+  "chestCharge": { "secondsPerChest": 7200, "chestId": "wooden" },
+  "chests": [
+    { "id": "wooden", "price": 150, "items": 2, "weights": { "common": 0.55, "uncommon": 0.28, "rare": 0.13, "epic": 0.035, "legendary": 0.005 } },
+    { "id": "silver", "price": 600, "items": 2, "weights": { "common": 0.10, "uncommon": 0.35, "rare": 0.35, "epic": 0.15, "legendary": 0.05 } },
+    { "id": "gold", "price": 2400, "items": 3, "weights": { "uncommon": 0.10, "rare": 0.35, "epic": 0.40, "legendary": 0.15 } }
+  ],
+  "salvage": { "common": 10, "uncommon": 40, "rare": 150, "epic": 600, "legendary": 2500 },
+  "duplicateConversionRate": 0.60,
+  "dropBucket": { "windowHours": 24, "maxItems": 40 },
+  "pity": { "threshold": 15, "minQuality": "epic", "excludeChestIds": ["wooden"] },
+  "inventory": { "maxPerItem": 9 }
+}

@@ -1,0 +1,6 @@
+<Application x:Class="BongoCat.UI.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- 不设 StartupUri：窗口由 Generic Host 的 DI 容器创建并显示 -->
+    <Application.Resources />
+</Application>

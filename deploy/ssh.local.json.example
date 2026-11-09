@@ -1,0 +1,7 @@
+{
+  "_说明": "复制本文件为 ssh.local.json 并填入真实凭据（ssh.local.json 已 git 忽略，绝不入库）",
+  "host": "your.server.ip",
+  "port": 22,
+  "user": "ubuntu",
+  "password": "在此填入密码"
+}
