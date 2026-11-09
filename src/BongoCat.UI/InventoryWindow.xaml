@@ -20,6 +20,7 @@
     -->
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <conv:HexToBrushConverter x:Key="HexToBrush"/>
         <conv:QualityToBrushConverter x:Key="QualityBrush"/>
         <conv:CosmeticIconConverter x:Key="ItemIcon"/>
@@ -170,6 +171,7 @@
                         <RadioButton Content="全部" Margin="0,3" Foreground="{DynamicResource Text.Primary}" GroupName="slot"
                                      IsChecked="{Binding FilterAll, Mode=TwoWay}"/>
                         <RadioButton Content="帽子" Margin="0,3" Foreground="{DynamicResource Text.Primary}" GroupName="slot"
+                                     Visibility="{Binding ShowHatFilter, Converter={StaticResource BoolToVis}}"
                                      IsChecked="{Binding FilterHat, Mode=TwoWay}"/>
                         <RadioButton Content="皮肤" Margin="0,3" Foreground="{DynamicResource Text.Primary}" GroupName="slot"
                                      IsChecked="{Binding FilterSkin, Mode=TwoWay}"/>

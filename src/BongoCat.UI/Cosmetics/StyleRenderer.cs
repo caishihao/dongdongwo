@@ -29,6 +29,9 @@ public static class StyleRenderer
     /// <summary>物种参数目录（启动时由 App 注入；species.json 的帽锚增量/帽围缩放数据源）。</summary>
     public static BongoCat.Core.Config.SpeciesCatalog? SpeciesData { get; set; }
 
+    /// <summary>帽子显示开关（false = 取消所有物种的帽子渲染；换装面板同步隐藏帽子分类）。</summary>
+    public static bool HatsVisible { get; set; } = false;
+
     /// <summary>
     /// 装载风格模板到宿主画布（含帽子画布预建 + hat 锚点偏移合成）。猫物种便捷入口。
     /// </summary>
@@ -110,6 +113,12 @@ public static class StyleRenderer
         foreach ((string _, Canvas hatCanvas) in CosmeticArt.CreateHatCanvases())
         {
             parts.PartHat.Children.Add(hatCanvas);
+        }
+
+        // 帽子取消（用户决策 11-09）：全局关闭时不渲染任何物种的帽子
+        if (!HatsVisible)
+        {
+            parts.PartHat.Visibility = Visibility.Collapsed;
         }
 
         // hat 锚点偏移合成（GDD-09 §2.3：风格层 + 物种层相加；Q版龙 = -10 + -14 = -24）

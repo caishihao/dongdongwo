@@ -171,8 +171,11 @@ public partial class InventoryViewModel : ObservableObject
 
     partial void OnSelectedCardChanged(InventoryItemCard? value) => UpdateSelectionActions();
 
+    /// <summary>帽子分类是否展示（与 StyleRenderer.HatsVisible 联动；关闭时换装面板无帽子页签）。</summary>
+    public bool ShowHatFilter => Cosmetics.StyleRenderer.HatsVisible;
+
     private ItemSlot? CurrentFilter
-        => FilterHat ? ItemSlot.Hat
+        => FilterHat && ShowHatFilter ? ItemSlot.Hat
          : FilterSkin ? ItemSlot.Skin
          : FilterBongos ? ItemSlot.Bongos
          : null; // FilterAll
@@ -203,7 +206,9 @@ public partial class InventoryViewModel : ObservableObject
         Cards.Clear();
         // 已拥有物品按 目录顺序 + 槽位升序 排列（稳定可预期，同槽新获得的追加在尾部）
         foreach (CollectopediaEntry entry in _inventory.GetCollectopedia()
-                     .Where(e => e.Owned && (filter is null || e.Item.Slot == filter)))
+                     .Where(e => e.Owned
+                         && (ShowHatFilter || e.Item.Slot != ItemSlot.Hat)
+                         && (filter is null || e.Item.Slot == filter)))
         {
             var card = new InventoryItemCard(entry.Item, entry.Count)
             {
